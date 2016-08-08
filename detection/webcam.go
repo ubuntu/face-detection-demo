@@ -23,8 +23,7 @@ func StartCameraDetect(workdir string, stop <-chan bool) {
 
 func detectFace(cap *opencv.Capture, workdir string, stop <-chan bool) {
 	for {
-		fmt.Println(path.Join(workdir, "detection", "haarcascade_frontalface_alt.xml"))
-		cascade := opencv.LoadHaarClassifierCascade(path.Join(workdir, "detection", "haarcascade_frontalface_alt.xml"))
+		cascade := opencv.LoadHaarClassifierCascade(path.Join(workdir, "..", "detection", "haarcascade_frontalface_alt.xml"))
 		if cap.GrabFrame() {
 			img := cap.RetrieveFrame(1)
 			if img != nil {
