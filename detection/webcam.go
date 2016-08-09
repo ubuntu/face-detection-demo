@@ -8,10 +8,19 @@ import (
 	"github.com/lazywei/go-opencv/opencv"
 )
 
-var stop chan bool
+var (
+	stop chan bool
+
+	// DetectionOn reports if face detection is in progress
+	DetectionOn bool
+)
 
 // StartCameraDetect creates a go routine handling web cam recording and image generation
 func StartCameraDetect(workdir string) {
+	if DetectionOn {
+		fmt.Println("Detection command received but already started")
+		return
+	}
 	stop = make(chan bool)
 
 	go func() {
@@ -19,15 +28,21 @@ func StartCameraDetect(workdir string) {
 		if cap == nil {
 			panic("cannot open camera")
 		}
+		DetectionOn = true
 		defer cap.Release()
 
 		detectFace(cap, workdir, stop)
+		DetectionOn = false
 	}()
 
 }
 
 // EndCameraDetect stop the associated goroutine turning on camera
 func EndCameraDetect() {
+	if !DetectionOn {
+		fmt.Println("Turning off detection command received but not started")
+		return
+	}
 	stop <- true
 	close(stop)
 }
