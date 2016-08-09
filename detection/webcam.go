@@ -8,17 +8,28 @@ import (
 	"github.com/lazywei/go-opencv/opencv"
 )
 
+var stop chan bool
+
 // StartCameraDetect creates a go routine handling web cam recording and image generation
-func StartCameraDetect(workdir string, stop <-chan bool) {
-	cap := opencv.NewCameraCapture(0)
+func StartCameraDetect(workdir string) {
+	stop = make(chan bool)
 
-	if cap == nil {
-		panic("cannot open camera")
-	}
-	defer cap.Release()
+	go func() {
+		cap := opencv.NewCameraCapture(0)
+		if cap == nil {
+			panic("cannot open camera")
+		}
+		defer cap.Release()
 
-	detectFace(cap, workdir, stop)
+		detectFace(cap, workdir, stop)
+	}()
 
+}
+
+// EndCameraDetect stop the associated goroutine turning on camera
+func EndCameraDetect() {
+	stop <- true
+	close(stop)
 }
 
 func detectFace(cap *opencv.Capture, workdir string, stop <-chan bool) {
@@ -37,9 +48,9 @@ func detectFace(cap *opencv.Capture, workdir string, stop <-chan bool) {
 		// we received the signal of cancelation in this channel
 		case <-stop:
 			fmt.Println("Stop processing webcam events")
-			break
+			return
 		case <-time.After(2 * time.Second):
-			break
+			continue
 		}
 	}
 }
