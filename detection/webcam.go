@@ -24,15 +24,16 @@ func StartCameraDetect(workdir string) {
 	stop = make(chan bool)
 
 	go func() {
+		defer func() { DetectionOn = false }()
+
 		cap := opencv.NewCameraCapture(0)
 		if cap == nil {
 			panic("cannot open camera")
 		}
-		DetectionOn = true
 		defer cap.Release()
+		DetectionOn = true
 
 		detectFace(cap, workdir, stop)
-		DetectionOn = false
 	}()
 
 }
