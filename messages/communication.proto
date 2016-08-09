@@ -1,0 +1,20 @@
+syntax = "proto3";
+package messages;
+
+message Action {
+  enum CamState {
+    CAMERA_UNCHANGED = 0;
+    CAMERA_ENABLE = 1;
+    CAMERA_DISABLE = 2;
+  }
+  CamState cameraState = 1;
+
+  enum Mode {
+    MODE_UNCHANGED = 0;
+    MODE_TRADITIONAL = 1;
+    MODE_FUN = 2;
+  }
+  Mode drawMode = 2;
+
+  bool restartServer = 3;
+}
