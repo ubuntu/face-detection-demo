@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/ubuntu/face-detection-demo/detection"
+	"github.com/ubuntu/face-detection-demo/messages"
 )
 
 func main() {
@@ -14,9 +17,45 @@ func main() {
 		log.Fatal(err)
 	}
 
-	stopDetection := make(chan bool)
-	defer close(stopDetection)
+	/*
+	   16:21:21   jdstrand | didrocks, zyga: /run/shm/snap.$SNAP_NAME.** is in the default template and can be used for cross-app           │ bloodearnest
+	                       | communications, but not cross-snap communications
+	*/
 
-	detection.StartCameraDetect(workdir, stopDetection)
+	actions := make(chan *messages.Action, 2)
+
+	for {
+		fmt.Println("main loop")
+		select {
+		case action := <-actions:
+			fmt.Println("new action received")
+			if action.CameraState == messages.Action_CAMERA_ENABLE {
+				detection.StartCameraDetect(workdir)
+				fmt.Println("Received camera on")
+			} else if action.CameraState == messages.Action_CAMERA_DISABLE {
+				detection.EndCameraDetect()
+				fmt.Println("Received camera off")
+			}
+		case <-time.After(5 * time.Second):
+			fmt.Println("timeout")
+			var foo *messages.Action
+			if detection.DetectionOn {
+				foo = &messages.Action{
+					DrawMode:      messages.Action_MODE_UNCHANGED,
+					CameraState:   messages.Action_CAMERA_DISABLE,
+					RestartServer: false,
+				}
+				fmt.Println("Switch camera off")
+			} else {
+				foo = &messages.Action{
+					DrawMode:      messages.Action_MODE_UNCHANGED,
+					CameraState:   messages.Action_CAMERA_ENABLE,
+					RestartServer: false,
+				}
+				fmt.Println("Switch camera on")
+			}
+			actions <- foo
+		}
+	}
 
 }
