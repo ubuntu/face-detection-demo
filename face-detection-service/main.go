@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/ubuntu/face-detection-demo/comm"
@@ -23,9 +24,13 @@ func main() {
 	                       | communications, but not cross-snap communications
 	*/
 
-	actions := make(chan *messages.Action, 2)
-	comm.StartSocketListener(actions)
+	wg := new(sync.WaitGroup)
 
+	actions := make(chan *messages.Action, 2)
+	quit := make(chan bool)
+	comm.StartSocketListener(actions, quit, wg)
+
+mainloop:
 	for {
 		fmt.Println("main loop")
 		select {
@@ -37,6 +42,12 @@ func main() {
 			} else if action.CameraState == messages.Action_CAMERA_DISABLE {
 				detection.EndCameraDetect()
 				fmt.Println("Received camera off")
+			}
+			if action.RestartServer {
+				fmt.Println("quit server")
+				// signal all main goroutines to exits
+				quit <- true
+				break mainloop
 			}
 		case <-time.After(5 * time.Second):
 			fmt.Println("timeout")
@@ -59,5 +70,7 @@ func main() {
 			actions <- foo
 		}
 	}
+
+	wg.Wait()
 
 }

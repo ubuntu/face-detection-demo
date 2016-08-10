@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/ubuntu/face-detection-demo/messages"
@@ -14,26 +15,35 @@ import (
 const socketfilename string = "/tmp/facedetect.socket"
 
 // StartSocketListener executes a socket listener in its own goroutine
-func StartSocketListener(actions chan<- *messages.Action) {
+func StartSocketListener(actions chan<- *messages.Action, quit <-chan bool, wg *sync.WaitGroup) {
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
+		defer os.Remove(socketfilename)
+
 		l, err := net.Listen("unix", socketfilename)
 		if err != nil {
 			log.Fatal("listen error:", err)
 		}
-		//TODO: running defer on this goroutine and stopping it properly
-		defer os.Remove(socketfilename)
 
-		for {
-			conn, err := l.Accept()
-			if err != nil {
-				fmt.Println("Error accepting connection: ", err)
-				continue
+		go func() {
+			for {
+				conn, err := l.Accept()
+				if err != nil {
+					fmt.Println("Error accepting connection: ", err)
+					continue
+				}
+				go fetchSocketMessage(conn, actions)
 			}
+		}()
 
-			go fetchSocketMessage(conn, actions)
-		}
+		<-quit
+		// this causes l.Accept() to return and exit the coroutine
+		l.Close()
+
 	}()
+
 }
 
 // SendToSocket will send an action message to socket message
