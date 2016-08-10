@@ -4,14 +4,18 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/ubuntu/face-detection-demo/comm"
 	"github.com/ubuntu/face-detection-demo/detection"
 	"github.com/ubuntu/face-detection-demo/messages"
 )
+
+var shutdown chan interface{}
 
 func main() {
 	workdir, err := filepath.Abs(filepath.Dir(os.Args[0]))
@@ -25,9 +29,13 @@ func main() {
 	*/
 
 	wg := new(sync.WaitGroup)
+	shutdown = make(chan interface{})
+
+	// handle user generated stop requests
+	userstop := make(chan os.Signal)
+	signal.Notify(userstop, syscall.SIGINT, syscall.SIGTERM)
 
 	actions := make(chan *messages.Action, 2)
-	shutdown := make(chan interface{})
 	comm.StartSocketListener(actions, shutdown, wg)
 
 mainloop:
@@ -44,12 +52,13 @@ mainloop:
 				fmt.Println("Received camera off")
 			}
 			if action.QuitServer {
-				fmt.Println("quit server")
-				// signal all main goroutines to exits
-				close(shutdown)
+				quit()
 				break mainloop
 			}
-		case <-time.After(5 * time.Second):
+		case <-userstop:
+			quit()
+			break mainloop
+		case <-time.After(225 * time.Second):
 			fmt.Println("timeout")
 			var foo *messages.Action
 			if detection.DetectionOn {
@@ -72,5 +81,10 @@ mainloop:
 	}
 
 	wg.Wait()
+}
 
+func quit() {
+	fmt.Println("quit server")
+	// signal all main goroutines to exits
+	close(shutdown)
 }
