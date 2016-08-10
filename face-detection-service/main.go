@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/ubuntu/face-detection-demo/comm"
 	"github.com/ubuntu/face-detection-demo/detection"
 	"github.com/ubuntu/face-detection-demo/messages"
 )
@@ -23,6 +24,7 @@ func main() {
 	*/
 
 	actions := make(chan *messages.Action, 2)
+	comm.StartSocketListener(actions)
 
 	for {
 		fmt.Println("main loop")
