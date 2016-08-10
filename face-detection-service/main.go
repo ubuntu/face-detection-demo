@@ -27,7 +27,7 @@ func main() {
 	wg := new(sync.WaitGroup)
 
 	actions := make(chan *messages.Action, 2)
-	quit := make(chan bool)
+	quit := make(chan interface{})
 	comm.StartSocketListener(actions, quit, wg)
 
 mainloop:
@@ -46,7 +46,7 @@ mainloop:
 			if action.QuitServer {
 				fmt.Println("quit server")
 				// signal all main goroutines to exits
-				quit <- true
+				close(quit)
 				break mainloop
 			}
 		case <-time.After(5 * time.Second):
