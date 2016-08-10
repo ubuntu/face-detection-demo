@@ -27,8 +27,8 @@ func main() {
 	wg := new(sync.WaitGroup)
 
 	actions := make(chan *messages.Action, 2)
-	quit := make(chan interface{})
-	comm.StartSocketListener(actions, quit, wg)
+	shutdown := make(chan interface{})
+	comm.StartSocketListener(actions, shutdown, wg)
 
 mainloop:
 	for {
@@ -37,7 +37,7 @@ mainloop:
 		case action := <-actions:
 			fmt.Println("new action received")
 			if action.CameraState == messages.Action_CAMERA_ENABLE {
-				detection.StartCameraDetect(workdir)
+				detection.StartCameraDetect(workdir, shutdown, wg)
 				fmt.Println("Received camera on")
 			} else if action.CameraState == messages.Action_CAMERA_DISABLE {
 				detection.EndCameraDetect()
@@ -46,7 +46,7 @@ mainloop:
 			if action.QuitServer {
 				fmt.Println("quit server")
 				// signal all main goroutines to exits
-				close(quit)
+				close(shutdown)
 				break mainloop
 			}
 		case <-time.After(5 * time.Second):

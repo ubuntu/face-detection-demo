@@ -3,28 +3,41 @@ package detection
 import (
 	"fmt"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/lazywei/go-opencv/opencv"
 )
 
 var (
-	stop chan bool
+	stop chan interface{}
 
 	// DetectionOn reports if face detection is in progress
 	DetectionOn bool
 )
 
 // StartCameraDetect creates a go routine handling web cam recording and image generation
-func StartCameraDetect(workdir string) {
+func StartCameraDetect(workdir string, shutdown <-chan interface{}, wg *sync.WaitGroup) {
 	if DetectionOn {
 		fmt.Println("Detection command received but already started")
 		return
 	}
-	stop = make(chan bool)
+	stop = make(chan interface{})
 
+	// send the main quit channel to stop if we got a shutdown request
 	go func() {
+		select {
+		case <-shutdown:
+			close(stop)
+		case <-stop:
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 		defer func() { DetectionOn = false }()
+		defer fmt.Println("Stop camera")
 
 		cap := opencv.NewCameraCapture(0)
 		if cap == nil {
@@ -44,11 +57,10 @@ func EndCameraDetect() {
 		fmt.Println("Turning off detection command received but not started")
 		return
 	}
-	stop <- true
 	close(stop)
 }
 
-func detectFace(cap *opencv.Capture, workdir string, stop <-chan bool) {
+func detectFace(cap *opencv.Capture, workdir string, stop <-chan interface{}) {
 	for {
 		cascade := opencv.LoadHaarClassifierCascade(path.Join(workdir, "..", "detection", "haarcascade_frontalface_alt.xml"))
 		if cap.GrabFrame() {

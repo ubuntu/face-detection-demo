@@ -15,7 +15,7 @@ import (
 const socketfilename string = "/tmp/facedetect.socket"
 
 // StartSocketListener executes a socket listener in its own goroutine
-func StartSocketListener(actions chan<- *messages.Action, quit <-chan interface{}, wg *sync.WaitGroup) {
+func StartSocketListener(actions chan<- *messages.Action, shutdown <-chan interface{}, wg *sync.WaitGroup) {
 
 	wg.Add(1)
 	go func() {
@@ -35,7 +35,7 @@ func StartSocketListener(actions chan<- *messages.Action, quit <-chan interface{
 					default:
 						fmt.Println("Error accepting connection: ", err)
 						continue
-					case <-quit:
+					case <-shutdown:
 						// channel is closed as listener not a real error, we are quitting
 						return
 					}
@@ -44,7 +44,7 @@ func StartSocketListener(actions chan<- *messages.Action, quit <-chan interface{
 			}
 		}()
 
-		<-quit
+		<-shutdown
 		// this causes l.Accept() to return and exit the coroutine
 		l.Close()
 
