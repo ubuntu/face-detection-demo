@@ -43,7 +43,7 @@ mainloop:
 				detection.EndCameraDetect()
 				fmt.Println("Received camera off")
 			}
-			if action.RestartServer {
+			if action.QuitServer {
 				fmt.Println("quit server")
 				// signal all main goroutines to exits
 				quit <- true
@@ -54,16 +54,16 @@ mainloop:
 			var foo *messages.Action
 			if detection.DetectionOn {
 				foo = &messages.Action{
-					DrawMode:      messages.Action_MODE_UNCHANGED,
-					CameraState:   messages.Action_CAMERA_DISABLE,
-					RestartServer: false,
+					DrawMode:    messages.Action_MODE_UNCHANGED,
+					CameraState: messages.Action_CAMERA_DISABLE,
+					QuitServer:  false,
 				}
 				fmt.Println("Switch camera off")
 			} else {
 				foo = &messages.Action{
-					DrawMode:      messages.Action_MODE_UNCHANGED,
-					CameraState:   messages.Action_CAMERA_ENABLE,
-					RestartServer: false,
+					DrawMode:    messages.Action_MODE_UNCHANGED,
+					CameraState: messages.Action_CAMERA_ENABLE,
+					QuitServer:  false,
 				}
 				fmt.Println("Switch camera on")
 			}

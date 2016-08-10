@@ -16,5 +16,5 @@ message Action {
   }
   Mode drawMode = 2;
 
-  bool restartServer = 3;
+  bool QuitServer = 3;
 }

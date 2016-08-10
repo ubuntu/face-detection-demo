@@ -72,8 +72,8 @@ func createMessage(enableCam bool, disableCam bool, funMode bool, normalMode boo
 	}
 
 	return &messages.Action{
-		CameraState:   cameraState,
-		DrawMode:      mode,
-		RestartServer: restart,
+		CameraState: cameraState,
+		DrawMode:    mode,
+		QuitServer:  restart,
 	}
 }
