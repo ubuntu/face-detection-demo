@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/mattn/go-sqlite3"
+
 	"github.com/ubuntu/face-detection-demo/comm"
 	"github.com/ubuntu/face-detection-demo/datastore"
 	"github.com/ubuntu/face-detection-demo/detection"
@@ -36,8 +38,6 @@ func main() {
 		datadir = rootdir
 	}
 
-	datastore.LoadSettings(datadir)
-
 	// channels synchronization
 	wg = new(sync.WaitGroup)
 	shutdown = make(chan interface{})
@@ -50,6 +50,17 @@ func main() {
 
 	// starts external communications channel
 	comm.StartSocketListener(actions, shutdown, wg)
+
+	// prepare settings and data
+	datastore.LoadSettings(datadir)
+	datastore.LoadDB(datadir, shutdown)
+	data := datastore.Stat{Time: 1234, NumPersons: 42}
+	data.Add()
+	data = datastore.Stat{Time: 12345, NumPersons: 1}
+	data.Add()
+	data = datastore.Stat{Time: 123456, NumPersons: 3}
+	data.Add()
+	fmt.Println(datastore.Stats)
 
 	// starts camera if it was already started last time
 	if datastore.FaceDetection() {
