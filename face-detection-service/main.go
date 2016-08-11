@@ -15,20 +15,20 @@ import (
 	"github.com/ubuntu/face-detection-demo/messages"
 )
 
-var shutdown chan interface{}
+var (
+	wg       *sync.WaitGroup
+	shutdown chan interface{}
+	workdir  string
+)
 
 func main() {
-	workdir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
+	var err error
+
+	if workdir, err = filepath.Abs(filepath.Dir(os.Args[0])); err != nil {
 		log.Fatal(err)
 	}
 
-	/*
-	   16:21:21   jdstrand | didrocks, zyga: /run/shm/snap.$SNAP_NAME.** is in the default template and can be used for cross-app           │ bloodearnest
-	                       | communications, but not cross-snap communications
-	*/
-
-	wg := new(sync.WaitGroup)
+	wg = new(sync.WaitGroup)
 	shutdown = make(chan interface{})
 
 	// handle user generated stop requests
@@ -36,6 +36,7 @@ func main() {
 	signal.Notify(userstop, syscall.SIGINT, syscall.SIGTERM)
 
 	actions := make(chan *messages.Action, 2)
+
 	comm.StartSocketListener(actions, shutdown, wg)
 
 mainloop:
@@ -44,21 +45,13 @@ mainloop:
 		select {
 		case action := <-actions:
 			fmt.Println("new action received")
-			if action.CameraState == messages.Action_CAMERA_ENABLE {
-				detection.StartCameraDetect(workdir, shutdown, wg)
-				fmt.Println("Received camera on")
-			} else if action.CameraState == messages.Action_CAMERA_DISABLE {
-				detection.EndCameraDetect()
-				fmt.Println("Received camera off")
-			}
-			if action.QuitServer {
-				quit()
+			if processaction(action) {
 				break mainloop
 			}
 		case <-userstop:
 			quit()
 			break mainloop
-		case <-time.After(225 * time.Second):
+		case <-time.After(5 * time.Second):
 			fmt.Println("timeout")
 			var foo *messages.Action
 			if detection.DetectionOn {
@@ -81,6 +74,22 @@ mainloop:
 	}
 
 	wg.Wait()
+}
+
+// process action and return true if we need to quit (exit mainloop)
+func processaction(action *messages.Action) bool {
+	if action.CameraState == messages.Action_CAMERA_ENABLE {
+		detection.StartCameraDetect(workdir, shutdown, wg)
+		fmt.Println("Received camera on")
+	} else if action.CameraState == messages.Action_CAMERA_DISABLE {
+		detection.EndCameraDetect()
+		fmt.Println("Received camera off")
+	}
+	if action.QuitServer {
+		quit()
+		return true
+	}
+	return false
 }
 
 func quit() {
