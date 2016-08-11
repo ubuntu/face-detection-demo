@@ -2,23 +2,22 @@ package detection
 
 import (
 	"fmt"
-	"path"
 	"sync"
 	"time"
 
 	"github.com/lazywei/go-opencv/opencv"
+	"github.com/ubuntu/face-detection-demo/datastore"
 )
 
 var (
 	stop chan interface{}
 
-	// DetectionOn reports if face detection is in progress
-	DetectionOn bool
+	cameraOn bool
 )
 
 // StartCameraDetect creates a go routine handling web cam recording and image generation
 func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.WaitGroup) {
-	if DetectionOn {
+	if cameraOn {
 		fmt.Println("Detection command received but already started")
 		return
 	}
@@ -36,7 +35,7 @@ func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.Wai
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		defer func() { DetectionOn = false }()
+		defer func() { cameraOn = false }()
 		defer fmt.Println("Stop camera")
 
 		cap := opencv.NewCameraCapture(0)
@@ -44,7 +43,8 @@ func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.Wai
 			panic("cannot open camera")
 		}
 		defer cap.Release()
-		DetectionOn = true
+		cameraOn = true
+		datastore.SetDetection(true)
 
 		detectFace(cap, rootdir, stop)
 	}()
@@ -53,7 +53,8 @@ func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.Wai
 
 // EndCameraDetect stop the associated goroutine turning on camera
 func EndCameraDetect() {
-	if !DetectionOn {
+	datastore.SetDetection(false)
+	if !cameraOn {
 		fmt.Println("Turning off detection command received but not started")
 		return
 	}

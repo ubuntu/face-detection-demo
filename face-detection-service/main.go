@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ubuntu/face-detection-demo/comm"
+	"github.com/ubuntu/face-detection-demo/datastore"
 	"github.com/ubuntu/face-detection-demo/detection"
 	"github.com/ubuntu/face-detection-demo/messages"
 )
@@ -28,6 +29,12 @@ func main() {
 	if rootdir, err = filepath.Abs(path.Join(filepath.Dir(os.Args[0]), "..")); err != nil {
 		log.Fatal(err)
 	}
+	datadir := os.Getenv("SNAP_DATA")
+	if datadir == "" {
+		datadir = rootdir
+	}
+
+	datastore.LoadSettings(datadir)
 
 	wg = new(sync.WaitGroup)
 	shutdown = make(chan interface{})
@@ -39,6 +46,11 @@ func main() {
 	actions := make(chan *messages.Action, 2)
 
 	comm.StartSocketListener(actions, shutdown, wg)
+
+	// starts camera if it was already started last time
+	if datastore.GetDetection() {
+		detection.StartCameraDetect(rootdir, shutdown, wg)
+	}
 
 mainloop:
 	for {
@@ -55,7 +67,7 @@ mainloop:
 		case <-time.After(5 * time.Second):
 			fmt.Println("timeout")
 			var foo *messages.Action
-			if detection.DetectionOn {
+			if datastore.GetDetection() {
 				foo = &messages.Action{
 					DrawMode:    messages.Action_MODE_UNCHANGED,
 					CameraState: messages.Action_CAMERA_DISABLE,
