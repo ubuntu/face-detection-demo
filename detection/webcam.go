@@ -44,7 +44,7 @@ func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.Wai
 		}
 		defer cap.Release()
 		cameraOn = true
-		datastore.SetDetection(true)
+		datastore.SetFaceDetection(true)
 
 		detectFace(cap, rootdir, stop)
 	}()
@@ -53,7 +53,7 @@ func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.Wai
 
 // EndCameraDetect stop the associated goroutine turning on camera
 func EndCameraDetect() {
-	datastore.SetDetection(false)
+	datastore.SetFaceDetection(false)
 	if !cameraOn {
 		fmt.Println("Turning off detection command received but not started")
 		return

@@ -23,6 +23,7 @@ var (
 	rootdir  string
 )
 
+//go:generate protoc --go_out=../messages/ --proto_path ../messages/ ../messages/communication.proto
 func main() {
 	var err error
 
@@ -48,7 +49,7 @@ func main() {
 	comm.StartSocketListener(actions, shutdown, wg)
 
 	// starts camera if it was already started last time
-	if datastore.GetDetection() {
+	if datastore.FaceDetection() {
 		detection.StartCameraDetect(rootdir, shutdown, wg)
 	}
 
@@ -67,18 +68,18 @@ mainloop:
 		case <-time.After(5 * time.Second):
 			fmt.Println("timeout")
 			var foo *messages.Action
-			if datastore.GetDetection() {
+			if datastore.FaceDetection() {
 				foo = &messages.Action{
-					DrawMode:    messages.Action_MODE_UNCHANGED,
-					CameraState: messages.Action_CAMERA_DISABLE,
-					QuitServer:  false,
+					FaceDetection: messages.Action_FACEDETECTION_DISABLE,
+					RenderingMode: messages.Action_RENDERINGMODE_UNCHANGED,
+					QuitServer:    false,
 				}
 				fmt.Println("Switch camera off")
 			} else {
 				foo = &messages.Action{
-					DrawMode:    messages.Action_MODE_UNCHANGED,
-					CameraState: messages.Action_CAMERA_ENABLE,
-					QuitServer:  false,
+					FaceDetection: messages.Action_FACEDETECTION_ENABLE,
+					RenderingMode: messages.Action_RENDERINGMODE_UNCHANGED,
+					QuitServer:    false,
 				}
 				fmt.Println("Switch camera on")
 			}
@@ -91,17 +92,17 @@ mainloop:
 
 // process action and return true if we need to quit (exit mainloop)
 func processaction(action *messages.Action) bool {
-	if action.CameraState == messages.Action_CAMERA_ENABLE {
+	if action.FaceDetection == messages.Action_FACEDETECTION_ENABLE {
 		detection.StartCameraDetect(rootdir, shutdown, wg)
 		fmt.Println("Received camera on")
-	} else if action.CameraState == messages.Action_CAMERA_DISABLE {
+	} else if action.FaceDetection == messages.Action_FACEDETECTION_DISABLE {
 		detection.EndCameraDetect()
 		fmt.Println("Received camera off")
 	}
-	if action.DrawMode == messages.Action_MODE_FUN {
-		datastore.SetRenderMode(datastore.FUNMODE)
-	} else if action.DrawMode == messages.Action_MODE_TRADITIONAL {
-		datastore.SetRenderMode(datastore.NORMALMODE)
+	if action.RenderingMode == messages.Action_RENDERINGMODE_FUN {
+		datastore.SetRenderingMode(datastore.FUNRENDERING)
+	} else if action.RenderingMode == messages.Action_RENDERINGMODE_NORMAL {
+		datastore.SetRenderingMode(datastore.NORMALRENDERING)
 	}
 	if action.QuitServer {
 		quit()

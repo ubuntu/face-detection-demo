@@ -10,26 +10,25 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Rendermode corresponds to various rendering mode options (fun, normal…)
-type Rendermode int
+// RenderMode corresponds to various rendering mode options (fun, normal…)
+type RenderMode int
 
 const (
-	// NORMALMODE draws circles around heads
-	NORMALMODE = iota
-	// FUNMODE draws logos instead on top of heads
-	FUNMODE
+	// NORMALRENDERING draws circles around heads
+	NORMALRENDERING = iota
+	// FUNRENDERING draws logos instead on top of heads
+	FUNRENDERING
 )
 
-type settings struct {
-	Detection bool
-	Mode      Rendermode
+type settingsElem struct {
+	FaceDetectionSetting bool
+	RenderingModeSetting RenderMode
 }
 
 var (
 	datadir       string
 	settingsdir   string
-	values        = settings{false, NORMALMODE}
-	valuemutex    = &sync.Mutex{}
+	settings      = settingsElem{false, NORMALRENDERING}
 	filesavemutex = &sync.Mutex{}
 )
 
@@ -44,55 +43,45 @@ func LoadSettings(dir string) {
 		// no file available: can be first install with defaults
 		return
 	}
-	if err = yaml.Unmarshal(dat, &values); err != nil {
+	if err = yaml.Unmarshal(dat, &settings); err != nil {
 		fmt.Println("Couldn't unserialized settings from", settingsdir, ". Reverting to defaults.")
 	}
 }
 
-// GetDetection tells if detection is on or off
-func GetDetection() bool {
-	valuemutex.Lock()
-	val := values.Detection
-	valuemutex.Unlock()
-	return val
+// FaceDetection tells if detection is on or off
+func FaceDetection() bool {
+	return settings.FaceDetectionSetting
 }
 
-// GetRenderingMode return current rendering mode
-func GetRenderingMode() Rendermode {
-	valuemutex.Lock()
-	val := values.Mode
-	valuemutex.Unlock()
-	return val
+// RenderingMode return current rendering mode
+func RenderingMode() RenderMode {
+	return settings.RenderingModeSetting
 }
 
-// SetDetection save new detection state
-func SetDetection(newDetectionValue bool) {
-	valuemutex.Lock()
-	defer valuemutex.Unlock()
-	if newDetectionValue == values.Detection {
+// SetFaceDetection save new detection state
+func SetFaceDetection(faceDetection bool) {
+	if faceDetection == settings.FaceDetectionSetting {
 		return
 	}
-	values.Detection = newDetectionValue
+	settings.FaceDetectionSetting = faceDetection
 
 	go saveToFile()
 }
 
-// SetRenderMode save new rendering mode
-func SetRenderMode(newRenderModeValue Rendermode) {
-	valuemutex.Lock()
-	defer valuemutex.Unlock()
-	if newRenderModeValue == values.Mode {
+// SetRenderingMode save new rendering mode
+func SetRenderingMode(renderingMode RenderMode) {
+	if renderingMode == settings.RenderingModeSetting {
 		return
 	}
-	values.Mode = newRenderModeValue
+	settings.RenderingModeSetting = renderingMode
 
 	go saveToFile()
 }
 
 func saveToFile() {
-	data, err := yaml.Marshal(&values)
+	data, err := yaml.Marshal(&settings)
 	if err != nil {
-		fmt.Println("Can't convert", values, "to yaml:", err)
+		fmt.Println("Can't convert", settings, "to yaml:", err)
 		return
 	}
 
