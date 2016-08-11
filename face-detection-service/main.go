@@ -98,6 +98,11 @@ func processaction(action *messages.Action) bool {
 		detection.EndCameraDetect()
 		fmt.Println("Received camera off")
 	}
+	if action.DrawMode == messages.Action_MODE_FUN {
+		datastore.SetRenderMode(datastore.FUNMODE)
+	} else if action.DrawMode == messages.Action_MODE_TRADITIONAL {
+		datastore.SetRenderMode(datastore.NORMALMODE)
+	}
 	if action.QuitServer {
 		quit()
 		return true
