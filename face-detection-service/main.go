@@ -27,6 +27,7 @@ var (
 func main() {
 	var err error
 
+	// Set main set of directories
 	if rootdir, err = filepath.Abs(path.Join(filepath.Dir(os.Args[0]), "..")); err != nil {
 		log.Fatal(err)
 	}
@@ -37,6 +38,7 @@ func main() {
 
 	datastore.LoadSettings(datadir)
 
+	// channels synchronization
 	wg = new(sync.WaitGroup)
 	shutdown = make(chan interface{})
 
@@ -46,6 +48,7 @@ func main() {
 
 	actions := make(chan *messages.Action, 2)
 
+	// starts external communications channel
 	comm.StartSocketListener(actions, shutdown, wg)
 
 	// starts camera if it was already started last time
