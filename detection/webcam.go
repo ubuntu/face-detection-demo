@@ -17,7 +17,7 @@ var (
 )
 
 // StartCameraDetect creates a go routine handling web cam recording and image generation
-func StartCameraDetect(workdir string, shutdown <-chan interface{}, wg *sync.WaitGroup) {
+func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.WaitGroup) {
 	if DetectionOn {
 		fmt.Println("Detection command received but already started")
 		return
@@ -46,7 +46,7 @@ func StartCameraDetect(workdir string, shutdown <-chan interface{}, wg *sync.Wai
 		defer cap.Release()
 		DetectionOn = true
 
-		detectFace(cap, workdir, stop)
+		detectFace(cap, rootdir, stop)
 	}()
 
 }
@@ -60,9 +60,9 @@ func EndCameraDetect() {
 	close(stop)
 }
 
-func detectFace(cap *opencv.Capture, workdir string, stop <-chan interface{}) {
+func detectFace(cap *opencv.Capture, rootdir string, stop <-chan interface{}) {
 	for {
-		cascade := opencv.LoadHaarClassifierCascade(path.Join(workdir, "..", "detection", "haarcascade_frontalface_alt.xml"))
+		cascade := opencv.LoadHaarClassifierCascade(path.Join(rootdir, "frontfacedetection.xml"))
 		if cap.GrabFrame() {
 			img := cap.RetrieveFrame(1)
 			if img != nil {

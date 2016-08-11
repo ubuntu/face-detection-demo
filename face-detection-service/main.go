@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"sync"
 	"syscall"
@@ -18,13 +19,13 @@ import (
 var (
 	wg       *sync.WaitGroup
 	shutdown chan interface{}
-	workdir  string
+	rootdir  string
 )
 
 func main() {
 	var err error
 
-	if workdir, err = filepath.Abs(filepath.Dir(os.Args[0])); err != nil {
+	if rootdir, err = filepath.Abs(path.Join(filepath.Dir(os.Args[0]), "..")); err != nil {
 		log.Fatal(err)
 	}
 
@@ -79,7 +80,7 @@ mainloop:
 // process action and return true if we need to quit (exit mainloop)
 func processaction(action *messages.Action) bool {
 	if action.CameraState == messages.Action_CAMERA_ENABLE {
-		detection.StartCameraDetect(workdir, shutdown, wg)
+		detection.StartCameraDetect(rootdir, shutdown, wg)
 		fmt.Println("Received camera on")
 	} else if action.CameraState == messages.Action_CAMERA_DISABLE {
 		detection.EndCameraDetect()
