@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"log"
 	"path"
+	"time"
 )
 
 // Stat is a datapoint in time of collected face detected stats
 type Stat struct {
-	Time       int
+	TimeStamp  time.Time
 	NumPersons int
 }
 
@@ -48,7 +49,7 @@ func createTable(db *sql.DB) {
 	// create table if doesn't exist
 	createquery := `
 	CREATE TABLE IF NOT EXISTS stats(
-		Time INTEGER,
+		TimeStamp DATETIME,
 		NumPersons INTEGER
 	);
 	`
@@ -61,7 +62,7 @@ func createTable(db *sql.DB) {
 func insertStat(db *sql.DB, s Stat) {
 	addquery := `
 	INSERT INTO stats(
-		Time,
+		TimeStamp,
 		NumPersons
 	) values(?, ?)
 	`
@@ -73,15 +74,15 @@ func insertStat(db *sql.DB, s Stat) {
 	}
 	defer stmt.Close()
 
-	if _, err2 := stmt.Exec(s.Time, s.NumPersons); err2 != nil {
+	if _, err2 := stmt.Exec(s.TimeStamp, s.NumPersons); err2 != nil {
 		fmt.Println("Couldn't save", s, ":", err)
 	}
 }
 
 func fetchAllStats(db *sql.DB) (result []Stat, err error) {
 	readallquery := `
-	SELECT Time, NumPersons FROM stats
-	ORDER BY datetime(Time) DESC
+	SELECT TimeStamp, NumPersons FROM stats
+	ORDER BY TimeStamp ASC
 	`
 
 	rows, err := db.Query(readallquery)
@@ -92,7 +93,7 @@ func fetchAllStats(db *sql.DB) (result []Stat, err error) {
 
 	for rows.Next() {
 		s := Stat{}
-		if err = rows.Scan(&s.Time, &s.NumPersons); err != nil {
+		if err = rows.Scan(&s.TimeStamp, &s.NumPersons); err != nil {
 			return nil, err
 		}
 		result = append(result, s)

@@ -54,11 +54,14 @@ func main() {
 	// prepare settings and data
 	datastore.LoadSettings(datadir)
 	datastore.LoadDB(datadir, shutdown)
-	data := datastore.Stat{Time: 1234, NumPersons: 42}
+	n := time.Now().Add(-10 * time.Second)
+	data := datastore.Stat{TimeStamp: n, NumPersons: 42}
 	data.Add()
-	data = datastore.Stat{Time: 12345, NumPersons: 1}
+	n = n.Add(5 * time.Second)
+	data = datastore.Stat{TimeStamp: n, NumPersons: 1}
 	data.Add()
-	data = datastore.Stat{Time: 123456, NumPersons: 3}
+	n = n.Add(5 * time.Second)
+	data = datastore.Stat{TimeStamp: n, NumPersons: 3}
 	data.Add()
 	fmt.Println(datastore.Stats)
 
