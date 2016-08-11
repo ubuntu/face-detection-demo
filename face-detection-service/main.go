@@ -70,6 +70,9 @@ func main() {
 		detection.StartCameraDetect(rootdir, shutdown, wg)
 	}
 
+	// starts external communications channel
+	comm.StartSocketListener(actions, shutdown, wg)
+
 mainloop:
 	for {
 		fmt.Println("main loop")
