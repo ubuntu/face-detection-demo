@@ -48,9 +48,6 @@ func main() {
 
 	actions := make(chan *messages.Action, 2)
 
-	// starts external communications channel
-	comm.StartSocketListener(actions, shutdown, wg)
-
 	// prepare settings and data
 	datastore.LoadSettings(datadir)
 	datastore.LoadDB(datadir, shutdown)
