@@ -72,6 +72,7 @@ func main() {
 
 	// starts external communications channel
 	comm.StartSocketListener(actions, shutdown, wg)
+	comm.StartServer(rootdir, actions)
 
 mainloop:
 	for {
