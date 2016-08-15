@@ -28,7 +28,7 @@ func StartServer(rootdir string, actions chan<- *messages.Action) {
 
 // WSServer maintaining the web socket server
 type WSServer struct {
-	match        string
+	patternURL string
 	pastmessages []*messages.WSMessage
 	clients      map[int]*Client
 	addCh        chan *Client
@@ -50,7 +50,7 @@ func NewWSServer(patternURL string, actions chan<- *messages.Action) *WSServer {
 	errCh := make(chan error)
 
 	return &WSServer{
-		match,
+		patternURL,
 		pastmessages,
 		clients,
 		addCh,
@@ -124,7 +124,7 @@ func (s *WSServer) onNewClient(ws *websocket.Conn) {
 // Listen to new ws client conn
 func (s *WSServer) Listen() {
 	log.Println("Start ws listener...")
-	http.Handle(s.match, websocket.Handler(s.onNewClient))
+	http.Handle(s.patternURL, websocket.Handler(s.onNewClient))
 
 	for {
 		select {
