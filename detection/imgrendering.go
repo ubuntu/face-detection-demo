@@ -10,6 +10,7 @@ import (
 
 	"github.com/lazywei/go-opencv/opencv"
 	"github.com/nfnt/resize"
+	"github.com/ubuntu/face-detection-demo/datastore"
 )
 
 var (
@@ -18,6 +19,13 @@ var (
 		"fedora.png", "opensuse.png", "yocto.png"}
 	datadir string
 )
+
+// RenderedImage abstract if we are using opencv or direct image blending
+type RenderedImage struct {
+	cvimg         *opencv.IplImage
+	img           *image.RGBA
+	RenderingMode datastore.RenderMode
+}
 
 // InitLogos and destination datadir. Will ignore unreachable logos
 func InitLogos(logodir string, ddir string) {
@@ -46,29 +54,42 @@ func InitLogos(logodir string, ddir string) {
 	logos = logos[:i]
 }
 
-func drawFace(img *opencv.IplImage, face *opencv.Rect, num int) {
+// DrawFace renders a new face on top of image depending on rendering type
+func (r *RenderedImage) DrawFace(face *opencv.Rect, num int, cvimage *opencv.IplImage) {
 
-	opencv.Circle(img,
-		opencv.Point{
-			X: face.X() + (face.Width() / 2),
-			Y: face.Y() + (face.Height() / 2),
-		},
-		face.Width()/2,
-		opencv.ScalarAll(255.0), 1, 1, 0)
+	switch r.RenderingMode {
+	case datastore.NORMALRENDERING:
+		if r.cvimg == nil {
+			r.cvimg = cvimage.Clone()
+		}
 
-	infile, err := os.Open("/tmp/logo.png")
-	if err != nil {
-		// replace this with real error handling
-		log.Fatal(err)
+		opencv.Circle(r.cvimg,
+			opencv.Point{
+				X: face.X() + (face.Width() / 2),
+				Y: face.Y() + (face.Height() / 2),
+			},
+			face.Width()/2,
+			opencv.ScalarAll(255.0), 1, 1, 0)
+
+	case datastore.FUNRENDERING:
+		if r.img == nil {
+			source := cvimage.ToImage()
+			r.img = image.NewRGBA(source.Bounds())
+			draw.Draw(r.img, r.img.Bounds(), source, image.ZP, draw.Src)
+		}
+
+		// resize logo to match face
+		// TODO: logo needs to be randomized depending on num
+		logo := resize.Resize(0, uint(face.Height()), logos[num], resize.NearestNeighbor)
+		logorect := image.Rect(face.X()+face.Width()/2-logo.Bounds().Dx()/2,
+			face.Y()+face.Height()/2-logo.Bounds().Dy()/2,
+			face.X()+logo.Bounds().Dx(),
+			face.Y()+logo.Bounds().Dy())
+
+		draw.Draw(r.img, logorect, logo, image.ZP, draw.Over)
+
 	}
-	defer infile.Close()
-
-	logosrc, _, err := image.Decode(infile)
-	if err != nil {
-		// replace this with real error handling
-		log.Fatal(err)
-	}
-	logo := resize.Resize(0, uint(face.Height()), logosrc, resize.NearestNeighbor)
+}
 
 	logorect := image.Rect(face.X()+face.Width()/2-logo.Bounds().Dx()/2,
 		face.Y()+face.Height()/2-logo.Bounds().Dy()/2,

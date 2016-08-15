@@ -106,12 +106,14 @@ func detectFace(cap *opencv.Capture, rootdir string, stop <-chan interface{}) {
 
 func drawAndSaveFaces(img *opencv.IplImage, faces []*opencv.Rect) {
 	// save raw image before modifications
-	modifiedImg := img.Clone()
 	detectedFace := false
+
+	dest := RenderedImage{RenderingMode: datastore.RenderingMode()}
+
 	for num, face := range faces {
 		fmt.Println("face detected")
 		detectedFace = true
-		drawFace(modifiedImg, face, num)
+		dest.DrawFace(face, num, img)
 	}
 
 	// store and save stat
