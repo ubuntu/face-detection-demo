@@ -65,8 +65,8 @@ func (s *WSServer) Del(c *Client) {
 	s.delCh <- c
 }
 
-// SendAll signal a new message to send to all clients
-func (s *WSServer) SendAll(msg *messages.WSMessage) {
+// SendAllClients signal a new message to send to all clients
+func (s *WSServer) SendAllClients(msg *messages.WSMessage) {
 	s.sendAllCh <- msg
 }
 
@@ -80,19 +80,13 @@ func (s *WSServer) Err(err error) {
 	s.errCh <- err
 }
 
-func (s *WSServer) add(c *Client) {
-	s.addCh <- c
-}
-
 // NewAction is an action received by one client, sent to the main system process
 func (s *WSServer) NewAction(actionmsg *messages.Action) {
 	s.actions <- actionmsg
 }
 
-func (s *WSServer) sendAllClients(msg *messages.WSMessage) {
-	for _, c := range s.clients {
-		c.Send(msg)
-	}
+func (s *WSServer) add(c *Client) {
+	s.addCh <- c
 }
 
 func (s *WSServer) onNewClient(ws *websocket.Conn) {
