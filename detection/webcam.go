@@ -124,7 +124,9 @@ func drawAndSaveFaces(img *opencv.IplImage, faces []*opencv.Rect) {
 	datastore.DB.Add(*s)
 
 	opencv.SaveImage("/tmp/orig.png", img, 0)
+
+	// save image with face detection if any
 	if detectedFace {
-		opencv.SaveImage("/tmp/detect.png", modifiedImg, 0)
+		dest.Save()
 	}
 }

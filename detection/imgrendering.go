@@ -1,6 +1,7 @@
 package detection
 
 import (
+	"fmt"
 	"image"
 	"image/draw"
 	"image/png"
@@ -18,6 +19,9 @@ var (
 	logosPath = []string{"ubuntu.png", "archlinux.png", "debian.png", "gentoo.png",
 		"fedora.png", "opensuse.png", "yocto.png"}
 	datadir string
+
+	detectedfilename = "screendetected.png"
+	screenshotname   = "screencapture.png"
 )
 
 // RenderedImage abstract if we are using opencv or direct image blending
@@ -91,19 +95,45 @@ func (r *RenderedImage) DrawFace(face *opencv.Rect, num int, cvimage *opencv.Ipl
 	}
 }
 
-	logorect := image.Rect(face.X()+face.Width()/2-logo.Bounds().Dx()/2,
-		face.Y()+face.Height()/2-logo.Bounds().Dy()/2,
-		face.X()+logo.Bounds().Dx(),
-		face.Y()+logo.Bounds().Dy())
+// Save current image in destination file
+func (r *RenderedImage) Save() {
 
-	source := img.ToImage()
+	var savefn func(string) error
 
-	m := image.NewRGBA(source.Bounds())
-	draw.Draw(m, m.Bounds(), source, image.ZP, draw.Src)
+	switch r.RenderingMode {
+	case datastore.NORMALRENDERING:
+		savefn = func(filepath string) error {
+			opencv.SaveImage(filepath, r.cvimg, 0)
+			return nil
+		}
 
-	draw.Draw(m, logorect, logo, image.ZP, draw.Over)
+	case datastore.FUNRENDERING:
+		savefn = func(filepath string) error {
+			f, err := os.Create(filepath)
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+			return png.Encode(f, r.img)
+		}
+	}
 
-	w, _ := os.Create("/tmp/result.png")
-	defer w.Close()
-	png.Encode(w, m)
+	if err := saveatomic(datadir, detectedfilename, savefn); err != nil {
+		fmt.Println(err)
+	}
+}
+
+func saveatomic(dir string, filename string, savefn func(string) error) error {
+	tempfilen := path.Join(dir, "new"+filename)
+	dstfilen := path.Join(dir, filename)
+
+	if err := savefn(tempfilen); err != nil {
+		return fmt.Errorf("Couldn't save image to %s: %s", tempfilen, err)
+	}
+	defer os.Remove(tempfilen)
+
+	if err := os.Rename(tempfilen, dstfilen); err != nil {
+		return fmt.Errorf("Couldn't save temp image %s to %s: %s", tempfilen, dstfilen, err)
+	}
+	return nil
 }
