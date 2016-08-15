@@ -9,7 +9,3 @@ type WSMessage struct {
 	RefreshScreenshot       bool             `json:"refreshscreenshot"`
 	RefreshDetectScreenshot bool             `json:"refreshdetectscreenshot"`
 }
-
-func (m *WSMessage) String() string {
-	return m.Author + " says " + m.Body
-}
