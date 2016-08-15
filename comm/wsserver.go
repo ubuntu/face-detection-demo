@@ -24,7 +24,7 @@ type WSServer struct {
 	addCh      chan *Client
 	delCh      chan *Client
 	sendAllCh  chan *messages.WSMessage
-	doneCh     chan bool
+	doneCh     chan interface{}
 	errCh      chan error
 	actions    chan<- *messages.Action
 }
@@ -49,7 +49,7 @@ func NewWSServer(patternURL string, actions chan<- *messages.Action) *WSServer {
 	addCh := make(chan *Client)
 	delCh := make(chan *Client)
 	sendAllCh := make(chan *messages.WSMessage)
-	doneCh := make(chan bool)
+	doneCh := make(chan interface{})
 	errCh := make(chan error)
 
 	return &WSServer{
@@ -76,7 +76,7 @@ func (s *WSServer) SendAllClients(msg *messages.WSMessage) {
 
 // Done signal we are shutting down the ws server
 func (s *WSServer) Done() {
-	s.doneCh <- true
+	close(s.doneCh)
 }
 
 // Err signals about client errors

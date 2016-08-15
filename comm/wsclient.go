@@ -21,7 +21,7 @@ type Client struct {
 	ws     *websocket.Conn
 	server *WSServer
 	ch     chan *messages.WSMessage
-	doneCh chan bool
+	doneCh chan interface{}
 }
 
 // NewClient creates a new ws client
@@ -37,7 +37,7 @@ func NewClient(ws *websocket.Conn, server *WSServer) (*Client, error) {
 
 	maxID++
 	ch := make(chan *messages.WSMessage, channelBufSize)
-	doneCh := make(chan bool)
+	doneCh := make(chan interface{})
 
 	return &Client{maxID, ws, server, ch, doneCh}, nil
 }
@@ -55,8 +55,7 @@ func (c *Client) Send(msg *messages.WSMessage) {
 
 // Done close down client connection
 func (c *Client) Done() {
-	// TODO: maybe close the channel rather?
-	c.doneCh <- true
+	close(c.doneCh)
 }
 
 // Listen Write and Read request via channel
@@ -78,7 +77,6 @@ func (c *Client) listenWrite() {
 		// receive done request
 		case <-c.doneCh:
 			c.server.Del(c)
-			c.doneCh <- true // for listenRead method
 			return
 		}
 	}
@@ -92,7 +90,6 @@ func (c *Client) listenRead() {
 		// receive done request
 		case <-c.doneCh:
 			c.server.Del(c)
-			c.doneCh <- true // for listenWrite method
 			return
 
 		// read data from websocket connection
@@ -100,7 +97,7 @@ func (c *Client) listenRead() {
 			var action messages.Action
 			err := websocket.JSON.Receive(c.ws, &action)
 			if err == io.EOF {
-				c.doneCh <- true
+				close(c.doneCh)
 			} else if err != nil {
 				c.server.Err(err)
 			}
