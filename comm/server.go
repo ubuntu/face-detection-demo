@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"path"
 
+	"github.com/ubuntu/face-detection-demo/datastore"
 	"github.com/ubuntu/face-detection-demo/messages"
 
 	"golang.org/x/net/websocket"
@@ -29,19 +30,17 @@ func StartServer(rootdir string, actions chan<- *messages.Action) {
 // WSServer maintaining the web socket server
 type WSServer struct {
 	patternURL string
-	pastmessages []*messages.WSMessage
-	clients      map[int]*Client
-	addCh        chan *Client
-	delCh        chan *Client
-	sendAllCh    chan *messages.WSMessage
-	doneCh       chan bool
-	errCh        chan error
-	actions      chan<- *messages.Action
+	clients    map[int]*Client
+	addCh      chan *Client
+	delCh      chan *Client
+	sendAllCh  chan *messages.WSMessage
+	doneCh     chan bool
+	errCh      chan error
+	actions    chan<- *messages.Action
 }
 
 // NewWSServer create a new ws server
 func NewWSServer(patternURL string, actions chan<- *messages.Action) *WSServer {
-	pastmessages := []*messages.WSMessage{}
 	clients := make(map[int]*Client)
 	addCh := make(chan *Client)
 	delCh := make(chan *Client)
@@ -51,7 +50,6 @@ func NewWSServer(patternURL string, actions chan<- *messages.Action) *WSServer {
 
 	return &WSServer{
 		patternURL,
-		pastmessages,
 		clients,
 		addCh,
 		delCh,
@@ -61,8 +59,6 @@ func NewWSServer(patternURL string, actions chan<- *messages.Action) *WSServer {
 		actions,
 	}
 }
-
-// TODO: load past messages and load initial list of messages
 
 // Del removes a client from the connected list
 func (s *WSServer) Del(c *Client) {
@@ -87,12 +83,6 @@ func (s *WSServer) Err(err error) {
 func (s *WSServer) add(c *Client) {
 	s.addCh <- c
 }
-
-func (s *WSServer) sendPastMessages(c *Client) {
-	s.pastmessages = append(s.pastmessages, &messages.WSMessage{Author: "didrocks", Body: "hehe hehe"})
-	for _, msg := range s.pastmessages {
-		c.Send(msg)
-	}
 
 // NewAction is an action received by one client, sent to the main system process
 func (s *WSServer) NewAction(actionmsg *messages.Action) {
@@ -132,7 +122,8 @@ func (s *WSServer) Listen() {
 			log.Println("New client connected")
 			s.clients[c.id] = c
 			log.Println("Now", len(s.clients), "clients connected.")
-			s.sendPastMessages(c)
+			// send all stats messages
+			c.Send(&messages.WSMessage{AllStats: datastore.Stats})
 
 		case c := <-s.delCh:
 			log.Println("Disconnected client")
@@ -141,8 +132,9 @@ func (s *WSServer) Listen() {
 		// broadcast message to all clients
 		case msg := <-s.sendAllCh:
 			log.Println("Send to all clients:", msg)
-			s.pastmessages = append(s.pastmessages, msg)
-			s.sendAllClients(msg)
+			for _, c := range s.clients {
+				c.Send(msg)
+			}
 
 		case err := <-s.errCh:
 			log.Println("Error:", err.Error())
