@@ -102,6 +102,8 @@ func (s *WSServer) onNewClient(ws *websocket.Conn) {
 		fmt.Println("Couldn't accept connection:", err)
 	}
 	s.add(client)
+
+	// Main loop for client
 	client.Listen()
 }
 
@@ -112,6 +114,7 @@ func (s *WSServer) Listen() {
 
 	for {
 		select {
+		// new client connected
 		case c := <-s.addCh:
 			log.Println("New client connected")
 			s.clients[c.id] = c
@@ -119,6 +122,7 @@ func (s *WSServer) Listen() {
 			// send all stats messages
 			c.Send(&messages.WSMessage{AllStats: datastore.Stats})
 
+		// client disconnected
 		case c := <-s.delCh:
 			log.Println("Disconnected client")
 			delete(s.clients, c.id)
@@ -130,9 +134,11 @@ func (s *WSServer) Listen() {
 				c.Send(msg)
 			}
 
+		// error reported
 		case err := <-s.errCh:
 			log.Println("Error:", err.Error())
 
+		// server shutdown
 		case <-s.doneCh:
 			return
 		}
