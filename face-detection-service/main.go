@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"sync"
 	"syscall"
-	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 
@@ -75,25 +74,6 @@ mainloop:
 		case <-userstop:
 			quit()
 			break mainloop
-		case <-time.After(5 * time.Second):
-			fmt.Println("timeout")
-			var foo *messages.Action
-			if datastore.FaceDetection() {
-				foo = &messages.Action{
-					FaceDetection: messages.Action_FACEDETECTION_DISABLE,
-					RenderingMode: messages.Action_RENDERINGMODE_UNCHANGED,
-					QuitServer:    false,
-				}
-				fmt.Println("Switch camera off")
-			} else {
-				foo = &messages.Action{
-					FaceDetection: messages.Action_FACEDETECTION_ENABLE,
-					RenderingMode: messages.Action_RENDERINGMODE_UNCHANGED,
-					QuitServer:    false,
-				}
-				fmt.Println("Switch camera on")
-			}
-			actions <- foo
 		}
 	}
 
