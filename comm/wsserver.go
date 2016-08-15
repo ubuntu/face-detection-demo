@@ -14,18 +14,8 @@ import (
 
 // we just kill the webserver on shutdown, pending requests will just be dropped
 
-// StartServer starts in a goroutine both webserver and websocket handlers
-func StartServer(rootdir string, actions chan<- *messages.Action) {
-	go func() {
-		server := NewWSServer("/api", actions)
-		go server.Listen()
-		http.Handle("/", http.FileServer(http.Dir(path.Join(rootdir, "www"))))
-		err := http.ListenAndServe(":8080", nil)
-		if err != nil {
-			log.Fatal("Couldn't start webserver:", err)
-		}
-	}()
-}
+// WSserv main ws client connections
+var WSserv *WSServer
 
 // WSServer maintaining the web socket server
 type WSServer struct {
@@ -37,6 +27,20 @@ type WSServer struct {
 	doneCh     chan bool
 	errCh      chan error
 	actions    chan<- *messages.Action
+}
+
+// StartServer starts in a goroutine both webserver and websocket handlers
+func StartServer(rootdir string, actions chan<- *messages.Action) {
+	WSserv = NewWSServer("/api", actions)
+	fmt.Println("Server created", WSserv)
+	go func() {
+		go WSserv.Listen()
+		http.Handle("/", http.FileServer(http.Dir(path.Join(rootdir, "www"))))
+		err := http.ListenAndServe(":8080", nil)
+		if err != nil {
+			log.Fatal("Couldn't start webserver:", err)
+		}
+	}()
 }
 
 // NewWSServer create a new ws server

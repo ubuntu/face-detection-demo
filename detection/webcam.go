@@ -2,11 +2,14 @@ package detection
 
 import (
 	"fmt"
+	"path"
 	"sync"
 	"time"
 
 	"github.com/lazywei/go-opencv/opencv"
+	"github.com/ubuntu/face-detection-demo/comm"
 	"github.com/ubuntu/face-detection-demo/datastore"
+	"github.com/ubuntu/face-detection-demo/messages"
 )
 
 var (
@@ -93,6 +96,12 @@ func drawAndSaveFaces(img *opencv.IplImage, faces []*opencv.Rect) {
 		detectedFace = true
 		drawFace(modifiedImg, face, num)
 	}
+
+	// store and save stat
+	s := datastore.Stat{TimeStamp: time.Now(), NumPersons: len(faces)}
+	comm.WSserv.SendAllClients(&messages.WSMessage{NewStat: s})
+	datastore.DB.Add(s)
+
 	opencv.SaveImage("/tmp/orig.png", img, 0)
 	if detectedFace {
 		opencv.SaveImage("/tmp/detect.png", modifiedImg, 0)

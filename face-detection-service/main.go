@@ -54,14 +54,14 @@ func main() {
 
 	fmt.Println(datastore.DB.Stats)
 
+	// starts external communications channel
+	comm.StartSocketListener(actions, shutdown, wg)
+	comm.StartServer(rootdir, actions)
+
 	// starts camera if it was already started last time
 	if datastore.FaceDetection() {
 		detection.StartCameraDetect(rootdir, shutdown, wg)
 	}
-
-	// starts external communications channel
-	comm.StartSocketListener(actions, shutdown, wg)
-	comm.StartServer(rootdir, actions)
 
 mainloop:
 	for {
