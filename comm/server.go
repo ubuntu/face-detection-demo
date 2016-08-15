@@ -14,10 +14,9 @@ import (
 // we just kill the webserver on shutdown, pending requests will just be dropped
 
 // StartServer starts in a goroutine both webserver and websocket handlers
-func StartServer(rootdir string, actionchan chan<- *messages.Action) {
-	actions = actionchan
+func StartServer(rootdir string, actions chan<- *messages.Action) {
 	go func() {
-		server := NewWSServer("/api")
+		server := NewWSServer("/api", actions)
 		go server.Listen()
 		http.Handle("/", http.FileServer(http.Dir(path.Join(rootdir, "www"))))
 		err := http.ListenAndServe(":8080", nil)
@@ -37,10 +36,11 @@ type WSServer struct {
 	sendAllCh    chan *messages.WSMessage
 	doneCh       chan bool
 	errCh        chan error
+	actions      chan<- *messages.Action
 }
 
 // NewWSServer create a new ws server
-func NewWSServer(match string) *WSServer {
+func NewWSServer(patternURL string, actions chan<- *messages.Action) *WSServer {
 	pastmessages := []*messages.WSMessage{}
 	clients := make(map[int]*Client)
 	addCh := make(chan *Client)
@@ -58,6 +58,7 @@ func NewWSServer(match string) *WSServer {
 		sendAllCh,
 		doneCh,
 		errCh,
+		actions,
 	}
 }
 
@@ -92,6 +93,10 @@ func (s *WSServer) sendPastMessages(c *Client) {
 	for _, msg := range s.pastmessages {
 		c.Send(msg)
 	}
+
+// NewAction is an action received by one client, sent to the main system process
+func (s *WSServer) NewAction(actionmsg *messages.Action) {
+	s.actions <- actionmsg
 }
 
 func (s *WSServer) sendAllClients(msg *messages.WSMessage) {
