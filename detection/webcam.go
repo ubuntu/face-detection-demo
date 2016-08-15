@@ -123,7 +123,14 @@ func drawAndSaveFaces(img *opencv.IplImage, faces []*opencv.Rect) {
 		RenderingMode: datastore.RenderingMode()})
 	datastore.DB.Add(*s)
 
-	opencv.SaveImage("/tmp/orig.png", img, 0)
+	// save raw image
+	savefn := func(filepath string) error {
+		opencv.SaveImage(filepath, img, 0)
+		return nil
+	}
+	if err := saveatomic(datadir, screenshotname, savefn); err != nil {
+		fmt.Println(err)
+	}
 
 	// save image with face detection if any
 	if detectedFace {
