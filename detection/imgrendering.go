@@ -6,10 +6,45 @@ import (
 	"image/png"
 	"log"
 	"os"
+	"path"
 
 	"github.com/lazywei/go-opencv/opencv"
 	"github.com/nfnt/resize"
 )
+
+var (
+	logos     []image.Image
+	logosPath = []string{"ubuntu.png", "archlinux.png", "debian.png", "gentoo.png",
+		"fedora.png", "opensuse.png", "yocto.png"}
+	datadir string
+)
+
+// InitLogos and destination datadir. Will ignore unreachable logos
+func InitLogos(logodir string, ddir string) {
+	datadir = ddir
+
+	logos = make([]image.Image, len(logosPath))
+	i := 0
+
+	for _, p := range logosPath {
+		f, err := os.Open(path.Join(logodir, p))
+		if err != nil {
+			log.Println("Couldn't open", path.Join(logodir, p))
+			continue
+		}
+		defer f.Close()
+
+		logo, _, err := image.Decode(f)
+		if err != nil {
+			log.Println("Couldn't load image", p)
+			continue
+		}
+		logos[i] = logo
+		i++
+	}
+	// reslice to have current len() in case we couldn't load some logos
+	logos = logos[:i]
+}
 
 func drawFace(img *opencv.IplImage, face *opencv.Rect, num int) {
 

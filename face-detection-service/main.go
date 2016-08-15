@@ -37,6 +37,9 @@ func main() {
 		datadir = rootdir
 	}
 
+	// Load logos and set arctefacts destination directory
+	detection.InitLogos(path.Join(rootdir, "images"), datadir)
+
 	// channels synchronization
 	wg = new(sync.WaitGroup)
 	shutdown = make(chan interface{})
