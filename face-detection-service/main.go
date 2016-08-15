@@ -50,17 +50,9 @@ func main() {
 
 	// prepare settings and data
 	datastore.LoadSettings(datadir)
-	datastore.LoadDB(datadir, shutdown)
-	n := time.Now().Add(-10 * time.Second)
-	data := datastore.Stat{TimeStamp: n, NumPersons: 42}
-	data.Add()
-	n = n.Add(5 * time.Second)
-	data = datastore.Stat{TimeStamp: n, NumPersons: 1}
-	data.Add()
-	n = n.Add(5 * time.Second)
-	data = datastore.Stat{TimeStamp: n, NumPersons: 3}
-	data.Add()
-	fmt.Println(datastore.Stats)
+	datastore.StartDB(datadir, shutdown, wg)
+
+	fmt.Println(datastore.DB.Stats)
 
 	// starts camera if it was already started last time
 	if datastore.FaceDetection() {
