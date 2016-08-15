@@ -66,27 +66,39 @@ func EndCameraDetect() {
 }
 
 func detectFace(cap *opencv.Capture, rootdir string, stop <-chan interface{}) {
+	nextFrameSec := time.Now()
+	cascade := opencv.LoadHaarClassifierCascade(path.Join(rootdir, "frontfacedetection.xml"))
 	for {
-		cascade := opencv.LoadHaarClassifierCascade(path.Join(rootdir, "frontfacedetection.xml"))
+
+		select {
+		case <-stop:
+			fmt.Println("Stop processing webcam events")
+			cascade.Release()
+			return
+		default:
+		}
+
 		if cap.GrabFrame() {
+
+			// we dropped all grab framesand only take one every X seconds (no support in opencv go binding for CV_CAP_PROP_BUFFERSIZE)
+			// if we didn't grab them one after another, we'll have past frames when proceeding
+			if time.Now().Before(nextFrameSec) {
+				continue
+			}
+
+			// treat framee
 			img := cap.RetrieveFrame(1)
 			if img != nil {
 				faces := cascade.DetectObjects(img)
 				drawAndSaveFaces(img, faces)
 			}
+
 		}
 		cascade.Release()
-
-		// check if we need to exit. Add some timeouts before grabbing the next camera image
-		select {
-		// we received the signal of cancelation in this channel
-		case <-stop:
-			fmt.Println("Stop processing webcam events")
-			return
-		case <-time.After(2 * time.Second):
-			continue
-		}
+		cascade = opencv.LoadHaarClassifierCascade(path.Join(rootdir, "frontfacedetection.xml"))
+		nextFrameSec = time.Now().Add(time.Duration(5 * time.Second))
 	}
+
 }
 
 func drawAndSaveFaces(img *opencv.IplImage, faces []*opencv.Rect) {
