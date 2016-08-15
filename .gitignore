@@ -1,2 +1,6 @@
 face-detection-service/face-detection-service
 face-detection-cli/face-detection-cli
+
+settings
+storage.db
+www/

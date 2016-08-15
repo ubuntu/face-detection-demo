@@ -27,6 +27,7 @@ func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.Wai
 	stop = make(chan interface{})
 
 	// send the main quit channel to stop if we got a shutdown request
+	// we can stop in two ways, hence the use of this channel
 	go func() {
 		select {
 		case <-shutdown:
@@ -74,6 +75,7 @@ func detectFace(cap *opencv.Capture, rootdir string, stop <-chan interface{}) {
 				drawAndSaveFaces(img, faces)
 			}
 		}
+		cascade.Release()
 
 		// check if we need to exit. Add some timeouts before grabbing the next camera image
 		select {
