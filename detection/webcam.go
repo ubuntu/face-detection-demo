@@ -58,6 +58,9 @@ func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.Wai
 // EndCameraDetect stop the associated goroutine turning on camera
 func EndCameraDetect() {
 	datastore.SetFaceDetection(false)
+	comm.WSserv.SendAllClients(&messages.WSMessage{
+		FaceDetection: datastore.FaceDetection(),
+		RenderingMode: datastore.RenderingMode()})
 	if !cameraOn {
 		fmt.Println("Turning off detection command received but not started")
 		return
@@ -113,7 +116,9 @@ func drawAndSaveFaces(img *opencv.IplImage, faces []*opencv.Rect) {
 
 	// store and save stat
 	s := datastore.Stat{TimeStamp: time.Now(), NumPersons: len(faces)}
-	comm.WSserv.SendAllClients(&messages.WSMessage{NewStat: s})
+	comm.WSserv.SendAllClients(&messages.WSMessage{NewStat: s,
+		FaceDetection: datastore.FaceDetection(),
+		RenderingMode: datastore.RenderingMode()})
 	datastore.DB.Add(s)
 
 	opencv.SaveImage("/tmp/orig.png", img, 0)
