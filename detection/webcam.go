@@ -118,9 +118,6 @@ func drawAndSaveFaces(img *opencv.IplImage, faces []*opencv.Rect) {
 
 	// store and save stat
 	s := &datastore.Stat{TimeStamp: time.Now(), NumPersons: len(faces)}
-	comm.WSserv.SendAllClients(&messages.WSMessage{NewStat: s,
-		FaceDetection: datastore.FaceDetection(),
-		RenderingMode: datastore.RenderingMode()})
 	datastore.DB.Add(*s)
 
 	// save raw image
@@ -136,4 +133,11 @@ func drawAndSaveFaces(img *opencv.IplImage, faces []*opencv.Rect) {
 	if detectedFace {
 		dest.Save()
 	}
+
+	// send messages to clients
+	comm.WSserv.SendAllClients(&messages.WSMessage{NewStat: s,
+		FaceDetection:           datastore.FaceDetection(),
+		RenderingMode:           datastore.RenderingMode(),
+		RefreshScreenshot:       true,
+		RefreshDetectScreenshot: detectedFace})
 }
