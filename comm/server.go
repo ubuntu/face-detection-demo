@@ -25,8 +25,7 @@ func StartServer(rootd string, datad string, actions chan<- *messages.Action) {
 		go WSserv.Listen()
 		http.HandleFunc("/data/", serveFileData)
 		http.Handle("/", http.FileServer(http.Dir(path.Join(rootdir, "www"))))
-		err := http.ListenAndServe(":8080", nil)
-		if err != nil {
+		if err := http.ListenAndServe(":8080", nil); err != nil {
 			log.Fatal("Couldn't start webserver:", err)
 		}
 	}()
