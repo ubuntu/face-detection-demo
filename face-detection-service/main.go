@@ -12,6 +12,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/ubuntu/face-detection-demo/appstate"
 	"github.com/ubuntu/face-detection-demo/comm"
 	"github.com/ubuntu/face-detection-demo/datastore"
 	"github.com/ubuntu/face-detection-demo/detection"
@@ -36,6 +37,9 @@ func main() {
 	if datadir == "" {
 		datadir = rootdir
 	}
+
+	// check if we are in broken mode
+	appstate.CheckIfBroken(rootdir)
 
 	// Load logos and set arctefacts destination directory
 	detection.InitLogos(path.Join(rootdir, "images"), datadir)
