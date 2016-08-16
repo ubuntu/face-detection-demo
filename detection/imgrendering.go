@@ -31,6 +31,8 @@ type RenderedImage struct {
 	RenderingMode datastore.RenderMode
 }
 
+type saveImgHandler func(string) error
+
 // InitLogos and destination datadir. Will ignore unreachable logos
 func InitLogos(logodir string, ddir string) {
 	datadir = ddir
@@ -123,7 +125,7 @@ func (r *RenderedImage) Save() {
 	}
 }
 
-func saveatomic(dir string, filename string, savefn func(string) error) error {
+func saveatomic(dir string, filename string, savefn saveImgHandler) error {
 	tempfilen := path.Join(dir, "new"+filename)
 	dstfilen := path.Join(dir, filename)
 
