@@ -3,7 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
+	"path"
+	"path/filepath"
 
 	"github.com/ubuntu/face-detection-demo/comm"
 	"github.com/ubuntu/face-detection-demo/messages"
@@ -31,6 +34,18 @@ func main() {
 	if *funMode && *normalMode {
 		errorOut("fun and normal rendering mode can't be set at the same time")
 	}
+
+	// Set main set of directories for socket dir
+	var rootdir string
+	var err error
+	if rootdir, err = filepath.Abs(path.Join(filepath.Dir(os.Args[0]), "..")); err != nil {
+		log.Fatal(err)
+	}
+	datadir := os.Getenv("SNAP_DATA")
+	if datadir == "" {
+		datadir = rootdir
+	}
+	comm.SetSocketDir(datadir)
 
 	msg := createMessage(*enableCam, *disableCam, *funMode, *normalMode, *quit)
 

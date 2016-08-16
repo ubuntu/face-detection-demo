@@ -64,6 +64,7 @@ func main() {
 	fmt.Println(datastore.DB.Stats)
 
 	// starts external communications channel
+	comm.SetSocketDir(datadir)
 	comm.StartSocketListener(actions, shutdown, wg)
 	comm.StartServer(rootdir, datadir, actions)
 

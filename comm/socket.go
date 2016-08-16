@@ -6,13 +6,21 @@ import (
 	"log"
 	"net"
 	"os"
+	"path"
 	"sync"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/ubuntu/face-detection-demo/messages"
 )
 
-const socketfilename string = "/tmp/facedetect.socket"
+var socketpath string
+
+const socketfilename string = "facedetect.socket"
+
+// SetSocketDir to initialize socket dir and path between client and server
+func SetSocketDir(socketdir string) {
+	socketpath = path.Join(socketdir, socketfilename)
+}
 
 // StartSocketListener executes a socket listener in its own goroutine
 func StartSocketListener(actions chan<- *messages.Action, shutdown <-chan interface{}, wg *sync.WaitGroup) {
@@ -20,9 +28,9 @@ func StartSocketListener(actions chan<- *messages.Action, shutdown <-chan interf
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		defer os.Remove(socketfilename)
+		defer os.Remove(socketpath)
 
-		l, err := net.Listen("unix", socketfilename)
+		l, err := net.Listen("unix", socketpath)
 		if err != nil {
 			log.Fatal("listen error:", err)
 		}
@@ -54,7 +62,7 @@ func StartSocketListener(actions chan<- *messages.Action, shutdown <-chan interf
 
 // SendToSocket will send an action message to socket message
 func SendToSocket(msg *messages.Action) (err error) {
-	conn, err := net.Dial("unix", socketfilename)
+	conn, err := net.Dial("unix", socketpath)
 	if err != nil {
 		fmt.Println("Couldn connect to socket:", err)
 		return
