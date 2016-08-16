@@ -38,8 +38,11 @@ func main() {
 		datadir = rootdir
 	}
 
-	// check if we are in broken mode
+	// check if we are in broken mode and remove database if it's the case
 	appstate.CheckIfBroken(rootdir)
+	if appstate.BrokenMode {
+		datastore.WipeDB(datadir)
+	}
 
 	// Load logos and set arctefacts destination directory
 	detection.InitLogos(path.Join(rootdir, "images"), datadir)

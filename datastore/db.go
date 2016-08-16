@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"path"
 	"sync"
 	"time"
@@ -28,9 +29,11 @@ var (
 	DB Database
 )
 
+const storagefilename = "storage.db"
+
 // StartDB opens and run the DB in its own goroutine
 func StartDB(dir string, shutdown <-chan interface{}, wg *sync.WaitGroup) {
-	dbconn, err := sql.Open("sqlite3", path.Join(dir, "storage.db"))
+	dbconn, err := sql.Open("sqlite3", path.Join(dir, storagefilename))
 	if err != nil {
 		log.Fatal("Couldn't open DB", err)
 	}
@@ -124,4 +127,9 @@ func (db *Database) insertStat(s Stat) {
 	if _, err2 := stmt.Exec(s.TimeStamp, s.NumPersons); err2 != nil {
 		fmt.Println("Couldn't save", s, ":", err)
 	}
+}
+
+// WipeDB remove database in dir uncondtionnally (existing or not)
+func WipeDB(dir string) {
+	os.Remove(path.Join(dir, storagefilename))
 }
