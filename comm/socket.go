@@ -34,6 +34,9 @@ func StartSocketListener(actions chan<- *messages.Action, shutdown <-chan interf
 		if err != nil {
 			log.Fatal("listen error:", err)
 		}
+		if err := os.Chmod(socketpath, 0777); err != nil {
+			log.Fatal("Couldn't make the socket world writable", err)
+		}
 
 		go func() {
 			for {
