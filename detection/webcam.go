@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/lazywei/go-opencv/opencv"
+	"github.com/ubuntu/face-detection-demo/appstate"
 	"github.com/ubuntu/face-detection-demo/comm"
 	"github.com/ubuntu/face-detection-demo/datastore"
 	"github.com/ubuntu/face-detection-demo/messages"
@@ -60,7 +61,8 @@ func EndCameraDetect() {
 	datastore.SetFaceDetection(false)
 	comm.WSserv.SendAllClients(&messages.WSMessage{
 		FaceDetection: datastore.FaceDetection(),
-		RenderingMode: datastore.RenderingMode()})
+		RenderingMode: datastore.RenderingMode(),
+		Broken:        appstate.BrokenMode})
 	if !cameraOn {
 		fmt.Println("Turning off detection command received but not started")
 		return
@@ -139,5 +141,6 @@ func drawAndSaveFaces(img *opencv.IplImage, faces []*opencv.Rect) {
 		FaceDetection:           datastore.FaceDetection(),
 		RenderingMode:           datastore.RenderingMode(),
 		RefreshScreenshot:       true,
-		RefreshDetectScreenshot: detectedFace})
+		RefreshDetectScreenshot: detectedFace,
+		Broken:                  appstate.BrokenMode})
 }

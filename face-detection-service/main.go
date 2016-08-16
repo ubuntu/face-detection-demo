@@ -100,12 +100,14 @@ func processaction(action *messages.Action) bool {
 		datastore.SetRenderingMode(datastore.FUNRENDERING)
 		comm.WSserv.SendAllClients(&messages.WSMessage{
 			FaceDetection: datastore.FaceDetection(),
-			RenderingMode: datastore.RenderingMode()})
+			RenderingMode: datastore.RenderingMode(),
+			Broken:        appstate.BrokenMode})
 	} else if action.RenderingMode == messages.Action_RENDERINGMODE_NORMAL {
 		datastore.SetRenderingMode(datastore.NORMALRENDERING)
 		comm.WSserv.SendAllClients(&messages.WSMessage{
 			FaceDetection: datastore.FaceDetection(),
-			RenderingMode: datastore.RenderingMode()})
+			RenderingMode: datastore.RenderingMode(),
+			Broken:        appstate.BrokenMode})
 	}
 	if action.QuitServer {
 		quit()

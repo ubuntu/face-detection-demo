@@ -10,4 +10,5 @@ type WSMessage struct {
 	RefreshDetectScreenshot bool                 `json:"refreshdetectscreenshot"`
 	FaceDetection           bool                 `json:"facedetection"`
 	RenderingMode           datastore.RenderMode `json:"renderingMode"`
+	Broken                  bool
 }

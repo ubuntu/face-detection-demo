@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ubuntu/face-detection-demo/appstate"
 	"github.com/ubuntu/face-detection-demo/datastore"
 	"github.com/ubuntu/face-detection-demo/messages"
 
@@ -111,7 +112,8 @@ func (s *WSServer) Listen() {
 			// send all stats messages
 			c.Send(&messages.WSMessage{AllStats: datastore.DB.Stats,
 				FaceDetection: datastore.FaceDetection(),
-				RenderingMode: datastore.RenderingMode()})
+				RenderingMode: datastore.RenderingMode(),
+				Broken:        appstate.BrokenMode})
 
 		// client disconnected
 		case c := <-s.delCh:
