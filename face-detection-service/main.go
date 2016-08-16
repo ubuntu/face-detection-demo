@@ -58,7 +58,7 @@ func main() {
 
 	// starts external communications channel
 	comm.StartSocketListener(actions, shutdown, wg)
-	comm.StartServer(rootdir, actions)
+	comm.StartServer(rootdir, datadir, actions)
 
 	// starts camera if it was already started last time
 	if datastore.FaceDetection() {
