@@ -1,0 +1,35 @@
+name: face-detection
+version: "1.0"
+summary: Demo for Face Detection statistics
+description: |
+  This demo shows face detection statics parameterized to take a picture
+  through a webcam every 5 seconds.
+  We can as well toggle some fun mode replacing heads with random distribution
+  logos supporting snap.
+  All stats are reported through a web interface on 8080 port.
+confinement: strict
+
+apps:
+  face-detection:
+    command: face-detection-cli
+  service:
+    command: face-detection-service
+    daemon: simple
+    restart-condition: always
+    plugs: [network-bind, network]
+
+parts:
+  face-detection-backend:
+    source: .
+    plugin: go
+  assets-backend:
+    source: .
+    plugin: dump
+    stage: [images, frontfacedetection.xml]
+    snap: [images, frontfacedetection.xml]
+  website:
+    source: https://github.com/ubuntu/face-detection-web.git
+    plugin: bower
+    organize:
+      '.': 'www'
+    
