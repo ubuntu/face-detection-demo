@@ -38,8 +38,11 @@ func main() {
 	// Set main set of directories for socket dir
 	var rootdir string
 	var err error
-	if rootdir, err = filepath.Abs(path.Join(filepath.Dir(os.Args[0]), "..")); err != nil {
-		log.Fatal(err)
+	rootdir = os.Getenv("SNAP")
+	if rootdir == "" {
+		if rootdir, err = filepath.Abs(path.Join(filepath.Dir(os.Args[0]), "..")); err != nil {
+			log.Fatal(err)
+		}
 	}
 	datadir := os.Getenv("SNAP_DATA")
 	if datadir == "" {
