@@ -42,6 +42,7 @@ func main() {
 	appstate.CheckIfBroken(rootdir)
 	if appstate.BrokenMode {
 		datastore.WipeDB(datadir)
+		detection.WipeScreenshots(datadir)
 	}
 
 	// Load logos and set arctefacts destination directory

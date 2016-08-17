@@ -139,3 +139,9 @@ func saveatomic(dir string, filename string, savefn saveImgHandler) error {
 	}
 	return nil
 }
+
+// WipeScreenshots removes screenshots in dir unconditionally (existing or not)
+func WipeScreenshots(dir string) {
+	os.Remove(path.Join(dir, detectedfilename))
+	os.Remove(path.Join(dir, screenshotname))
+}
