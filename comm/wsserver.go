@@ -110,7 +110,9 @@ func (s *WSServer) Listen() {
 			s.clients[c.id] = c
 			log.Println("Now", len(s.clients), "clients connected.")
 			// send all stats messages
-			c.Send(&messages.WSMessage{AllStats: datastore.DB.Stats,
+			c.Send(&messages.WSMessage{
+				Type:          "init",
+				AllStats:      datastore.DB.Stats,
 				FaceDetection: datastore.FaceDetection(),
 				RenderingMode: datastore.RenderingMode(),
 				Broken:        appstate.BrokenMode})

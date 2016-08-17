@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/lazywei/go-opencv/opencv"
-	"github.com/ubuntu/face-detection-demo/appstate"
 	"github.com/ubuntu/face-detection-demo/comm"
 	"github.com/ubuntu/face-detection-demo/datastore"
 	"github.com/ubuntu/face-detection-demo/messages"
@@ -50,6 +49,10 @@ func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.Wai
 		defer cap.Release()
 		cameraOn = true
 		datastore.SetFaceDetection(true)
+		comm.WSserv.SendAllClients(&messages.WSMessage{
+			Type:          "facedetection",
+			FaceDetection: datastore.FaceDetection(),
+		})
 
 		detectFace(cap, rootdir, stop)
 	}()
@@ -60,9 +63,9 @@ func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.Wai
 func EndCameraDetect() {
 	datastore.SetFaceDetection(false)
 	comm.WSserv.SendAllClients(&messages.WSMessage{
+		Type:          "facedetection",
 		FaceDetection: datastore.FaceDetection(),
-		RenderingMode: datastore.RenderingMode(),
-		Broken:        appstate.BrokenMode})
+	})
 	if !cameraOn {
 		fmt.Println("Turning off detection command received but not started")
 		return
@@ -137,10 +140,9 @@ func drawAndSaveFaces(img *opencv.IplImage, faces []*opencv.Rect) {
 	}
 
 	// send messages to clients
-	comm.WSserv.SendAllClients(&messages.WSMessage{NewStat: s,
-		FaceDetection:           datastore.FaceDetection(),
-		RenderingMode:           datastore.RenderingMode(),
+	comm.WSserv.SendAllClients(&messages.WSMessage{
+		Type:                    "newstat",
+		NewStat:                 s,
 		RefreshScreenshot:       true,
-		RefreshDetectScreenshot: detectedFace,
-		Broken:                  appstate.BrokenMode})
+		RefreshDetectScreenshot: detectedFace})
 }

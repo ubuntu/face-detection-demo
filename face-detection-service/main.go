@@ -103,15 +103,13 @@ func processaction(action *messages.Action) bool {
 	if action.RenderingMode == messages.Action_RENDERINGMODE_FUN {
 		datastore.SetRenderingMode(datastore.FUNRENDERING)
 		comm.WSserv.SendAllClients(&messages.WSMessage{
-			FaceDetection: datastore.FaceDetection(),
-			RenderingMode: datastore.RenderingMode(),
-			Broken:        appstate.BrokenMode})
+			Type:          "renderingmode",
+			RenderingMode: datastore.RenderingMode()})
 	} else if action.RenderingMode == messages.Action_RENDERINGMODE_NORMAL {
 		datastore.SetRenderingMode(datastore.NORMALRENDERING)
 		comm.WSserv.SendAllClients(&messages.WSMessage{
-			FaceDetection: datastore.FaceDetection(),
-			RenderingMode: datastore.RenderingMode(),
-			Broken:        appstate.BrokenMode})
+			Type:          "renderingmode",
+			RenderingMode: datastore.RenderingMode()})
 	}
 	if action.QuitServer {
 		quit()
