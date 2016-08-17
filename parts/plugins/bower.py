@@ -46,8 +46,10 @@ class BowerPlugin(dump.DumpPlugin, nodejs.NodePlugin):
         self.run(['bower', 'install'], cwd=self.installdir)
 
         # Remove bower and npm from final installation
-        for npmdir in ['bin', 'etc', 'include', 'lib', 'share']:
+        for npmdir in ['bin', 'etc', 'include', 'lib', 'share', '.git']:
             shutil.rmtree(os.path.join(self.installdir, npmdir))
+        for npmfile in ['CHANGELOG.md', 'LICENSE', 'README.md', '.gitignore']:
+            os.remove(os.path.join(self.installdir, npmfile))
 
         # WORKAROUND as organize doesn't work to move full root dir
         destdir = os.path.join(self.installdir, 'www')
