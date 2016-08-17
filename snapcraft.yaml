@@ -30,6 +30,7 @@ parts:
   website:
     source: https://github.com/ubuntu/face-detection-web.git
     plugin: bower
-    organize:
-      '.': 'www'
+    # organize doesn't work for now, we workaround in the plugin
+    #organize:
+    #  '.': 'www'
     

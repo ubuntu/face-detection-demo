@@ -48,3 +48,11 @@ class BowerPlugin(dump.DumpPlugin, nodejs.NodePlugin):
         # Remove bower and npm from final installation
         for npmdir in ['bin', 'etc', 'include', 'lib', 'share']:
             shutil.rmtree(os.path.join(self.installdir, npmdir))
+
+        # WORKAROUND as organize doesn't work to move full root dir
+        destdir = os.path.join(self.installdir, 'www')
+        files = os.listdir(self.installdir)
+        os.makedirs(destdir)
+        for f in files:
+            os.rename(os.path.join(self.installdir, f),
+                      os.path.join(destdir, f))
