@@ -16,7 +16,7 @@ apps:
     command: face-detection-service
     daemon: simple
     restart-condition: always
-    plugs: [network-bind, network]
+    plugs: [camera, network, network-bind]
 
 parts:
   face-detection-backend:
