@@ -6,3 +6,8 @@ face-detection-cli/face-detection-cli
 settings
 storage.db
 www/
+
+parts/
+stage/
+prime/
+*.snap
