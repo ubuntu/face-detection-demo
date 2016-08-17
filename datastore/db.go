@@ -129,7 +129,7 @@ func (db *Database) insertStat(s Stat) {
 	}
 }
 
-// WipeDB remove database in dir uncondtionnally (existing or not)
+// WipeDB removes database in dir unconditionally (existing or not)
 func WipeDB(dir string) {
 	os.Remove(path.Join(dir, storagefilename))
 }
