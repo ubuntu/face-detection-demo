@@ -9,6 +9,8 @@ description: |
   All stats are reported through a web interface on 8080 port.
 # AVC apparmor="DENIED" operation="open" profile="snap.face-detection.service" name="/sys/bus/usb/devices/" pid=16707 comm="face-detection-" requested_mask="r" denied_mask="r" fsuid=0 ouid=0
 # kernel: audit: type=1400 audit(1471437969.708:2261): apparmor="DENIED" operation="open" profile="snap.face-detection.service" name="/sys/bus/usb/devices/" pid=16707 comm="face-detection-" requested_mask="r" denied_mask="r" fsuid=0 ouid=0
+
+# sqlite3 wants to chmod: (during first exec query): https://bugs.launchpad.net/ubuntu/+source/sqlite3/+bug/1560899
 # audit[16707]: SECCOMP auid=4294967295 uid=0 gid=0 ses=4294967295 pid=16707 comm="face-detection-" exe="/snap/face-detection/x1/bin/face-detection-service" sig=31 arch=c000003e syscall=93 compat=0 ip=0x7f4424701a77 code=0x0
 confinement: devmode
 
