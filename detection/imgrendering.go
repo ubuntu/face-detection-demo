@@ -78,23 +78,27 @@ func (r *RenderedImage) DrawFace(face *opencv.Rect, num int, cvimage *opencv.Ipl
 			opencv.ScalarAll(255.0), 1, 1, 0)
 
 	case datastore.FUNRENDERING:
-		if r.img == nil {
-			source := cvimage.ToImage()
-			r.img = image.NewRGBA(source.Bounds())
-			draw.Draw(r.img, r.img.Bounds(), source, image.ZP, draw.Src)
-		}
-
-		// resize logo to match face
 		// TODO: logo needs to be randomized depending on num
-		logo := resize.Resize(0, uint(face.Height()), logos[num], resize.NearestNeighbor)
-		logorect := image.Rect(face.X()+face.Width()/2-logo.Bounds().Dx()/2,
-			face.Y()+face.Height()/2-logo.Bounds().Dy()/2,
-			face.X()+logo.Bounds().Dx(),
-			face.Y()+logo.Bounds().Dy())
-
-		draw.Draw(r.img, logorect, logo, image.ZP, draw.Over)
-
+		r.drawFunFace(face, num, cvimage)
 	}
+}
+
+func (r *RenderedImage) drawFunFace(face *opencv.Rect, num int, cvimage *opencv.IplImage) {
+
+	if r.img == nil {
+		source := cvimage.ToImage()
+		r.img = image.NewRGBA(source.Bounds())
+		draw.Draw(r.img, r.img.Bounds(), source, image.ZP, draw.Src)
+	}
+
+	// resize logo to match face
+	logo := resize.Resize(0, uint(face.Height()), logos[num], resize.NearestNeighbor)
+	logorect := image.Rect(face.X()+face.Width()/2-logo.Bounds().Dx()/2,
+		face.Y()+face.Height()/2-logo.Bounds().Dy()/2,
+		face.X()+logo.Bounds().Dx(),
+		face.Y()+logo.Bounds().Dy())
+
+	draw.Draw(r.img, logorect, logo, image.ZP, draw.Over)
 }
 
 // Save current image in destination file
