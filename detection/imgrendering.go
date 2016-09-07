@@ -102,14 +102,12 @@ func (r *RenderedImage) Save() {
 
 	var savefn func(string) error
 
-	switch r.RenderingMode {
-	case datastore.NORMALRENDERING:
+	if r.cvimg != nil {
 		savefn = func(filepath string) error {
 			opencv.SaveImage(filepath, r.cvimg, 0)
 			return nil
 		}
-
-	case datastore.FUNRENDERING:
+	} else {
 		savefn = func(filepath string) error {
 			f, err := os.Create(filepath)
 			if err != nil {
