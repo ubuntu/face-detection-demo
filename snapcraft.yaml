@@ -27,6 +27,9 @@ parts:
   face-detection-backend:
     source: .
     plugin: go
+    build-packages:
+      - build-essential
+      - libopencv-dev
   assets-backend:
     source: .
     plugin: dump
