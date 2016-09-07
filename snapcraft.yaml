@@ -1,5 +1,5 @@
 name: face-detection
-version: "1.0"
+version: "2.0alpha1"
 summary: Demo for Face Detection statistics
 description: |
   This demo shows face detection statics parameterized to take a picture
