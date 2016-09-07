@@ -43,7 +43,7 @@ class BowerPlugin(dump.DumpPlugin, nodejs.NodePlugin):
         self.run(['npm', 'install', '-g', 'bower'])
 
         # Run bower component install
-        self.run(['bower', 'install'], cwd=self.installdir)
+        self.run(['bower', '--allow-root', 'install'], cwd=self.installdir)
 
         # Remove bower and npm from final installation
         for npmdir in ['bin', 'etc', 'include', 'lib', 'share', '.git']:
