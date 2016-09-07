@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/lazywei/go-opencv/opencv"
+	"github.com/ubuntu/face-detection-demo/appstate"
 	"github.com/ubuntu/face-detection-demo/comm"
 	"github.com/ubuntu/face-detection-demo/datastore"
 	"github.com/ubuntu/face-detection-demo/messages"
@@ -122,7 +123,11 @@ func drawAndSaveFaces(img *opencv.IplImage, faces []*opencv.Rect) {
 	}
 
 	// store and save stat
-	s := &datastore.Stat{TimeStamp: time.Now(), NumPersons: len(faces)}
+	np := len(faces)
+	if appstate.BrokenMode {
+		np = -np
+	}
+	s := &datastore.Stat{TimeStamp: time.Now(), NumPersons: np}
 	datastore.DB.Add(*s)
 
 	// save raw image
