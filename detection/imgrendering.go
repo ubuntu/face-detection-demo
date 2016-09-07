@@ -17,7 +17,7 @@ import (
 var (
 	logos     []image.Image
 	logosPath = []string{"ubuntu.png", "archlinux.png", "debian.png", "gentoo.png",
-		"fedora.png", "opensuse.png", "yocto.png"}
+		"fedora.png", "opensuse.png", "yocto.png", "smiley.png"}
 	datadir string
 
 	detectedfilename = "screendetected.png"
