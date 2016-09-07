@@ -11,6 +11,7 @@ import (
 
 	"github.com/lazywei/go-opencv/opencv"
 	"github.com/nfnt/resize"
+	"github.com/ubuntu/face-detection-demo/appstate"
 	"github.com/ubuntu/face-detection-demo/datastore"
 )
 
@@ -62,6 +63,12 @@ func InitLogos(logodir string, ddir string) {
 
 // DrawFace renders a new face on top of image depending on rendering type
 func (r *RenderedImage) DrawFace(face *opencv.Rect, num int, cvimage *opencv.IplImage) {
+
+	if appstate.BrokenMode {
+		// force drawing smileys instead of people
+		r.drawFunFace(face, len(logos)-1, cvimage)
+		return
+	}
 
 	switch r.RenderingMode {
 	case datastore.NORMALRENDERING:
