@@ -115,6 +115,13 @@ func processaction(action *messages.Action) bool {
 			Type:          "renderingmode",
 			RenderingMode: datastore.RenderingMode()})
 	}
+	if action.Camera > -1 && int(action.Camera) != datastore.Camera() {
+		datastore.SetCamera(int(action.Camera))
+		if datastore.FaceDetection() {
+			fmt.Println("Change active camera")
+			go detection.RestartCamera(rootdir, shutdown, wg)
+		}
+	}
 	if action.QuitServer {
 		quit()
 		return true
