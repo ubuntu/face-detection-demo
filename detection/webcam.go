@@ -43,7 +43,8 @@ func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.Wai
 		defer func() { cameraOn = false }()
 		defer fmt.Println("Stop camera")
 
-		cap := opencv.NewCameraCapture(0)
+		// TODO: should check this one exists, if not, fallback to 0 (and let if crash if none)
+		cap := opencv.NewCameraCapture(datastore.Camera())
 		if cap == nil {
 			panic("cannot open camera")
 		}
