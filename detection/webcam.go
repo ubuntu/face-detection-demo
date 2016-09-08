@@ -75,6 +75,27 @@ func EndCameraDetect() {
 	close(stop)
 }
 
+// RestartCamera stops and restarts the camera in a sync fashion (wait for the camera to stop before sending the Start signal)
+func RestartCamera(rootdir string, shutdown <-chan interface{}, wg *sync.WaitGroup) {
+	if !cameraOn {
+		// check again after a second in case of a start + restart is issued.
+		// FIXME: this should be way better handled
+		time.Sleep(time.Second * 1)
+		if !cameraOn {
+			StartCameraDetect(rootdir, shutdown, wg)
+			return
+		}
+	}
+	close(stop)
+	for {
+		if !cameraOn {
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+	StartCameraDetect(rootdir, shutdown, wg)
+}
+
 func detectFace(cap *opencv.Capture, rootdir string, stop <-chan interface{}) {
 	nextFrameSec := time.Now()
 	cascade := opencv.LoadHaarClassifierCascade(path.Join(rootdir, "frontfacedetection.xml"))
