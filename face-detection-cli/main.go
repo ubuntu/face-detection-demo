@@ -20,6 +20,8 @@ func main() {
 	funMode := flag.Bool("fun", false, "Show some distro logos instead of the head")
 	normalMode := flag.Bool("normal", false, "Show some circle around detected heads")
 
+	camera := flag.Int("camera", -1, "Change active camera number")
+
 	quit := flag.Bool("quit", false, "Force the web server to shutdown")
 
 	flag.Parse()
@@ -50,7 +52,7 @@ func main() {
 	}
 	comm.SetSocketDir(datadir)
 
-	msg := createMessage(*enableCam, *disableCam, *funMode, *normalMode, *quit)
+	msg := createMessage(*enableCam, *disableCam, *funMode, *normalMode, *camera, *quit)
 
 	if err := comm.SendToSocket(msg); err != nil {
 		os.Exit(1)
@@ -63,7 +65,7 @@ func errorOut(message string) {
 	os.Exit(1)
 }
 
-func createMessage(enablefd bool, disablefd bool, fun bool, normal bool, quit bool) *messages.Action {
+func createMessage(enablefd bool, disablefd bool, fun bool, normal bool, camera int, quit bool) *messages.Action {
 	var cameraState messages.Action_FaceDetectionState
 	var renderingMode messages.Action_RenderingMode
 
@@ -86,6 +88,7 @@ func createMessage(enablefd bool, disablefd bool, fun bool, normal bool, quit bo
 	return &messages.Action{
 		FaceDetection: cameraState,
 		RenderingMode: renderingMode,
+		Camera:        int32(camera),
 		QuitServer:    quit,
 	}
 }
