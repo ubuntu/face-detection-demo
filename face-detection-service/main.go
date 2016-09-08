@@ -115,8 +115,12 @@ func processaction(action *messages.Action) bool {
 			Type:          "renderingmode",
 			RenderingMode: datastore.RenderingMode()})
 	}
-	if action.Camera > -1 && int(action.Camera) != datastore.Camera() {
-		datastore.SetCamera(int(action.Camera))
+	cameranum := int(action.Camera)
+	if cameranum > -1 && cameranum != datastore.Camera() {
+		datastore.SetCamera(cameranum)
+		comm.WSserv.SendAllClients(&messages.WSMessage{
+			Type:   "newcameraactivated",
+			Camera: cameranum})
 		if datastore.FaceDetection() {
 			fmt.Println("Change active camera")
 			go detection.RestartCamera(rootdir, shutdown, wg)

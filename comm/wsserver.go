@@ -115,6 +115,7 @@ func (s *WSServer) Listen() {
 				AllStats:      datastore.DB.Stats,
 				FaceDetection: datastore.FaceDetection(),
 				RenderingMode: datastore.RenderingMode(),
+				Camera:        datastore.Camera(),
 				Broken:        appstate.BrokenMode})
 
 		// client disconnected
