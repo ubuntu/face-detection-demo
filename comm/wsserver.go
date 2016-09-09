@@ -111,11 +111,12 @@ func (s *WSServer) Listen() {
 			log.Println("Now", len(s.clients), "clients connected.")
 			// send all stats messages
 			c.Send(&messages.WSMessage{
-				Type:             "init",
-				AllStats:         datastore.DB.Stats,
-				FaceDetection:    datastore.FaceDetection(),
-				RenderingMode:    datastore.RenderingMode(),
-				Camera:           datastore.Camera(),
+				Type:          "init",
+				AllStats:      datastore.DB.Stats,
+				FaceDetection: datastore.FaceDetection(),
+				RenderingMode: datastore.RenderingMode(),
+				// camera is offsetted by 1 for the client
+				Camera:           datastore.Camera() + 1,
 				AvailableCameras: appstate.AvailableCameras,
 				Broken:           appstate.BrokenMode})
 

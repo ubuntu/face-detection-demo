@@ -72,8 +72,9 @@ func openCamera(cameraNum int) *opencv.Capture {
 		if cap != nil {
 			datastore.SetCamera(currentCam)
 			comm.WSserv.SendAllClients(&messages.WSMessage{
-				Type:   "newcameraactivated",
-				Camera: currentCam})
+				Type: "newcameraactivated",
+				// camera is offsetted by 1 for the client
+				Camera: currentCam + 1})
 		}
 	}
 	return cap
@@ -124,7 +125,8 @@ func DetectCameras() {
 			if cap != nil {
 				cap.Release()
 			}
-			appstate.AvailableCameras = append(appstate.AvailableCameras, i)
+			// camera is offsetted by 1 for the client
+			appstate.AvailableCameras = append(appstate.AvailableCameras, i+1)
 		}
 	}
 }

@@ -20,7 +20,7 @@ func main() {
 	funMode := flag.Bool("fun", false, "Show some distro logos instead of the head")
 	normalMode := flag.Bool("normal", false, "Show some circle around detected heads")
 
-	camera := flag.Int("camera", -1, "Change active camera number")
+	camera := flag.Int("camera", 0, "Change active camera number")
 
 	quit := flag.Bool("quit", false, "Force the web server to shutdown")
 
