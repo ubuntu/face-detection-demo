@@ -8,8 +8,12 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// BrokenMode signal if the application is broken
-var BrokenMode bool
+var (
+	// BrokenMode signal if the application is broken
+	BrokenMode bool
+	// AvailableCameras list index of detected cameras
+	AvailableCameras []int
+)
 
 const brokenversion = "2.0alpha1"
 

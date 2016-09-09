@@ -114,6 +114,21 @@ func RestartCamera(rootdir string, shutdown <-chan interface{}, wg *sync.WaitGro
 	StartCameraDetect(rootdir, shutdown, wg)
 }
 
+// DetectCameras detects and files the index of available cameras. Take into account current camera if already on
+func DetectCameras() {
+	appstate.AvailableCameras = make([]int, 0)
+
+	for i := 0; i < 10; i++ {
+		cap := opencv.NewCameraCapture(i)
+		if cap != nil || (cameraOn && i == currentCam) {
+			if cap != nil {
+				cap.Release()
+			}
+			appstate.AvailableCameras = append(appstate.AvailableCameras, i)
+		}
+	}
+}
+
 func detectFace(cap *opencv.Capture, rootdir string, stop <-chan interface{}) {
 	nextFrameSec := time.Now()
 	cascade := opencv.LoadHaarClassifierCascade(path.Join(rootdir, "frontfacedetection.xml"))
