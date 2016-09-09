@@ -16,7 +16,8 @@ import (
 var (
 	stop chan interface{}
 
-	cameraOn bool
+	cameraOn   bool
+	currentCam = -1
 )
 
 // StartCameraDetect creates a go routine handling web cam recording and image generation
@@ -43,10 +44,9 @@ func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.Wai
 		defer func() { cameraOn = false }()
 		defer fmt.Println("Stop camera")
 
-		// TODO: should check this one exists, if not, fallback to 0 (and let if crash if none)
-		cap := opencv.NewCameraCapture(datastore.Camera())
+		cap := openCamera(datastore.Camera())
 		if cap == nil {
-			panic("cannot open camera")
+			panic(fmt.Sprintf("Cannot open camera %d", currentCam))
 		}
 		defer cap.Release()
 		cameraOn = true
@@ -59,6 +59,24 @@ func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.Wai
 		detectFace(cap, rootdir, stop)
 	}()
 
+}
+
+// fallback to camera 0 if can't open requested camera number
+func openCamera(cameraNum int) *opencv.Capture {
+	currentCam = cameraNum
+	cap := opencv.NewCameraCapture(currentCam)
+	if cap == nil && currentCam != 0 {
+		fmt.Printf("Can't open camera %d. Trying fallback to camera 0\n", currentCam)
+		currentCam = 0
+		cap = opencv.NewCameraCapture(currentCam)
+		if cap != nil {
+			datastore.SetCamera(currentCam)
+			comm.WSserv.SendAllClients(&messages.WSMessage{
+				Type:   "newcameraactivated",
+				Camera: currentCam})
+		}
+	}
+	return cap
 }
 
 // EndCameraDetect stop the associated goroutine turning on camera
