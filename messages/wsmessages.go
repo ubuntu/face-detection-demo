@@ -12,5 +12,6 @@ type WSMessage struct {
 	FaceDetection           bool                 `json:"facedetection"`
 	RenderingMode           datastore.RenderMode `json:"renderingmode"`
 	Camera                  int                  `json:"camera"`
+	AvailableCameras        []int                `json:"availablecameras"`
 	Broken                  bool                 `json:"broken"`
 }
