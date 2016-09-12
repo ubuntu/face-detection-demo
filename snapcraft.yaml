@@ -15,7 +15,7 @@ description: |
 confinement: devmode
 
 apps:
-  face-detection:
+  face-detection-demo:
     command: face-detection-cli
   service:
     command: face-detection-service
