@@ -20,9 +20,11 @@ import (
 )
 
 var (
-	wg       *sync.WaitGroup
-	shutdown chan interface{}
-	rootdir  string
+	wgwebcam         *sync.WaitGroup
+	wgservices       *sync.WaitGroup
+	shutdownwebcam   chan interface{}
+	shutdownservices chan interface{}
+	rootdir          string
 )
 
 //go:generate protoc --go_out=../messages/ --proto_path ../messages/ ../messages/communication.proto
@@ -52,8 +54,10 @@ func main() {
 	detection.InitLogos(path.Join(rootdir, "images"), datadir)
 
 	// channels synchronization
-	wg = new(sync.WaitGroup)
-	shutdown = make(chan interface{})
+	wgwebcam = new(sync.WaitGroup)
+	wgservices = new(sync.WaitGroup)
+	shutdownwebcam = make(chan interface{})
+	shutdownservices = make(chan interface{})
 
 	// handle user generated stop requests
 	userstop := make(chan os.Signal)
@@ -61,20 +65,23 @@ func main() {
 
 	actions := make(chan *messages.Action, 2)
 
+	// detect available cameras at startup
+	detection.DetectCameras()
+
 	// prepare settings and data
 	datastore.LoadSettings(datadir)
-	datastore.StartDB(datadir, shutdown, wg)
+	datastore.StartDB(datadir, shutdownservices, wgservices)
 
 	fmt.Println(datastore.DB.Stats)
 
 	// starts external communications channel
 	comm.SetSocketDir(datadir)
-	comm.StartSocketListener(actions, shutdown, wg)
+	comm.StartSocketListener(actions, shutdownservices, wgservices)
 	comm.StartServer(rootdir, datadir, actions)
 
 	// starts camera if it was already started last time
 	if datastore.FaceDetection() {
-		detection.StartCameraDetect(rootdir, shutdown, wg)
+		detection.StartCameraDetect(rootdir, shutdownwebcam, wgwebcam)
 	}
 
 mainloop:
@@ -92,13 +99,16 @@ mainloop:
 		}
 	}
 
-	wg.Wait()
+	// Ensure webcam and services stopped
+	wgwebcam.Wait()
+	wgservices.Wait()
 }
 
 // process action and return true if we need to quit (exit mainloop)
+// TODO: use quit channel (renamed userstop to quit) and send data there. Remove the bool True/False
 func processaction(action *messages.Action) bool {
 	if action.FaceDetection == messages.Action_FACEDETECTION_ENABLE {
-		detection.StartCameraDetect(rootdir, shutdown, wg)
+		detection.StartCameraDetect(rootdir, shutdownwebcam, wgwebcam)
 		fmt.Println("Received camera on")
 	} else if action.FaceDetection == messages.Action_FACEDETECTION_DISABLE {
 		detection.EndCameraDetect()
@@ -115,6 +125,18 @@ func processaction(action *messages.Action) bool {
 			Type:          "renderingmode",
 			RenderingMode: datastore.RenderingMode()})
 	}
+	// camera is offsetted by 1 for the client (0, protobuf default means no change)
+	cameranum := int(action.Camera) - 1
+	if cameranum > -1 && cameranum != datastore.Camera() {
+		datastore.SetCamera(cameranum)
+		comm.WSserv.SendAllClients(&messages.WSMessage{
+			Type:   "newcameraactivated",
+			Camera: cameranum + 1})
+		if datastore.FaceDetection() {
+			fmt.Println("Change active camera")
+			go detection.RestartCamera(rootdir, shutdownwebcam, wgwebcam)
+		}
+	}
 	if action.QuitServer {
 		quit()
 		return true
@@ -124,6 +146,8 @@ func processaction(action *messages.Action) bool {
 
 func quit() {
 	fmt.Println("quit server")
-	// signal all main goroutines to exits
-	close(shutdown)
+	// wait for webcam to shutdown, then ask services to shutdown
+	close(shutdownwebcam)
+	wgwebcam.Wait()
+	close(shutdownservices)
 }

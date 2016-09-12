@@ -23,12 +23,13 @@ const (
 type settingsElem struct {
 	FaceDetectionSetting bool
 	RenderingModeSetting RenderMode
+	Camera               int
 }
 
 var (
 	datadir       string
 	settingsdir   string
-	settings      = settingsElem{false, NORMALRENDERING}
+	settings      = settingsElem{false, NORMALRENDERING, 0}
 	filesavemutex = &sync.Mutex{}
 )
 
@@ -58,6 +59,11 @@ func RenderingMode() RenderMode {
 	return settings.RenderingModeSetting
 }
 
+// Camera return current camera number set
+func Camera() int {
+	return settings.Camera
+}
+
 // SetFaceDetection save new detection state
 func SetFaceDetection(faceDetection bool) {
 	if faceDetection == settings.FaceDetectionSetting {
@@ -74,6 +80,16 @@ func SetRenderingMode(renderingMode RenderMode) {
 		return
 	}
 	settings.RenderingModeSetting = renderingMode
+
+	go saveToFile()
+}
+
+// SetCamera save active camera number
+func SetCamera(cameranum int) {
+	if cameranum == settings.Camera {
+		return
+	}
+	settings.Camera = cameranum
 
 	go saveToFile()
 }

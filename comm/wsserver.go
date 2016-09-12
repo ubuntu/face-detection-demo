@@ -115,7 +115,10 @@ func (s *WSServer) Listen() {
 				AllStats:      datastore.DB.Stats,
 				FaceDetection: datastore.FaceDetection(),
 				RenderingMode: datastore.RenderingMode(),
-				Broken:        appstate.BrokenMode})
+				// camera is offsetted by 1 for the client
+				Camera:           datastore.Camera() + 1,
+				AvailableCameras: appstate.AvailableCameras,
+				Broken:           appstate.BrokenMode})
 
 		// client disconnected
 		case c := <-s.delCh:
