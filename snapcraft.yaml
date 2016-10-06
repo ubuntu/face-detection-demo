@@ -28,6 +28,7 @@ parts:
   face-detection-backend:
     source: .
     plugin: go
+    go-importpath: github.com/ubuntu/face-detection-demo
     build-packages:
       - build-essential
       - libopencv-dev
