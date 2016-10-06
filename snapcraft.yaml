@@ -35,7 +35,6 @@ parts:
   assets-backend:
     source: .
     plugin: dump
-    stage: [images, frontfacedetection.xml]
     snap: [images, frontfacedetection.xml]
   website:
     source: https://github.com/ubuntu/face-detection-web.git
