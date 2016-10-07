@@ -187,12 +187,7 @@ func drawAndSaveFaces(img *opencv.IplImage, faces []*opencv.Rect) {
 	s := &datastore.Stat{TimeStamp: time.Now(), NumPersons: np}
 	datastore.DB.Add(*s)
 
-	// save raw image
-	savefn := func(filepath string) error {
-		opencv.SaveImage(filepath, img, 0)
-		return nil
-	}
-	if err := saveatomic(datadir, screenshotname, savefn); err != nil {
+	if err := saveatomic(datadir, screenshotname, (*opencvImg)(img)); err != nil {
 		fmt.Println(err)
 	}
 
