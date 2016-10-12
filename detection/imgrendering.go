@@ -108,7 +108,7 @@ func (r *RenderedImage) DrawFace(face *opencv.Rect, num int, cvimage *opencv.Ipl
 
 	case datastore.FUNRENDERING:
 		// TODO: logo needs to be randomized depending on num
-		r.drawFunFace(face, num, cvimage)
+		r.drawFunFace(face, num%(len(logos)-1), cvimage)
 	}
 }
 
