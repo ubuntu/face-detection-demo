@@ -27,12 +27,34 @@ var (
 
 // RenderedImage abstract if we are using opencv or direct image blending
 type RenderedImage struct {
-	cvimg         *opencv.IplImage
-	img           *image.RGBA
+	cvimg         *opencvImg
+	img           *rgbaImg
 	RenderingMode datastore.RenderMode
 }
 
-type saveImgHandler func(string) error
+type opencvImg opencv.IplImage
+type rgbaImg struct {
+	*image.RGBA
+}
+type saver interface {
+	Save(string) error
+}
+
+// Save opencv images
+func (i *opencvImg) Save(filepath string) error {
+	opencv.SaveImage(filepath, (*opencv.IplImage)(i), 0)
+	return nil
+}
+
+// Save rgba images in png
+func (i *rgbaImg) Save(filepath string) error {
+	f, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return png.Encode(f, i)
+}
 
 // InitLogos and destination datadir. Will ignore unreachable logos
 func InitLogos(logodir string, ddir string) {
@@ -73,10 +95,10 @@ func (r *RenderedImage) DrawFace(face *opencv.Rect, num int, cvimage *opencv.Ipl
 	switch r.RenderingMode {
 	case datastore.NORMALRENDERING:
 		if r.cvimg == nil {
-			r.cvimg = cvimage.Clone()
+			r.cvimg = (*opencvImg)(cvimage.Clone())
 		}
 
-		opencv.Circle(r.cvimg,
+		opencv.Circle((*opencv.IplImage)(r.cvimg),
 			opencv.Point{
 				X: face.X() + (face.Width() / 2),
 				Y: face.Y() + (face.Height() / 2),
@@ -86,7 +108,7 @@ func (r *RenderedImage) DrawFace(face *opencv.Rect, num int, cvimage *opencv.Ipl
 
 	case datastore.FUNRENDERING:
 		// TODO: logo needs to be randomized depending on num
-		r.drawFunFace(face, num, cvimage)
+		r.drawFunFace(face, num%(len(logos)-1), cvimage)
 	}
 }
 
@@ -94,7 +116,7 @@ func (r *RenderedImage) drawFunFace(face *opencv.Rect, num int, cvimage *opencv.
 
 	if r.img == nil {
 		source := cvimage.ToImage()
-		r.img = image.NewRGBA(source.Bounds())
+		r.img = &rgbaImg{image.NewRGBA(source.Bounds())}
 		draw.Draw(r.img, r.img.Bounds(), source, image.ZP, draw.Src)
 	}
 
@@ -111,34 +133,23 @@ func (r *RenderedImage) drawFunFace(face *opencv.Rect, num int, cvimage *opencv.
 // Save current image in destination file
 func (r *RenderedImage) Save() {
 
-	var savefn func(string) error
-
+	var i saver
 	if r.cvimg != nil {
-		savefn = func(filepath string) error {
-			opencv.SaveImage(filepath, r.cvimg, 0)
-			return nil
-		}
+		i = r.cvimg
 	} else {
-		savefn = func(filepath string) error {
-			f, err := os.Create(filepath)
-			if err != nil {
-				return err
-			}
-			defer f.Close()
-			return png.Encode(f, r.img)
-		}
+		i = r.img
 	}
 
-	if err := saveatomic(datadir, detectedfilename, savefn); err != nil {
+	if err := saveatomic(datadir, detectedfilename, i); err != nil {
 		fmt.Println(err)
 	}
 }
 
-func saveatomic(dir string, filename string, savefn saveImgHandler) error {
+func saveatomic(dir string, filename string, s saver) error {
 	tempfilen := path.Join(dir, "new"+filename)
 	dstfilen := path.Join(dir, filename)
 
-	if err := savefn(tempfilen); err != nil {
+	if err := s.Save(tempfilen); err != nil {
 		return fmt.Errorf("Couldn't save image to %s: %s", tempfilen, err)
 	}
 	defer os.Remove(tempfilen)
