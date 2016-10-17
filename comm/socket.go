@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/ubuntu/face-detection-demo/appstate"
 	"github.com/ubuntu/face-detection-demo/messages"
 )
 
@@ -17,9 +18,9 @@ var socketpath string
 
 const socketfilename string = "facedetect.socket"
 
-// SetSocketDir to initialize socket dir and path between client and server
-func SetSocketDir(socketdir string) {
-	socketpath = path.Join(socketdir, socketfilename)
+// initialize socket dir and path between client and server
+func init() {
+	socketpath = path.Join(appstate.Datadir, socketfilename)
 }
 
 // StartSocketListener executes a socket listener in its own goroutine
