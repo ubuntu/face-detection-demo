@@ -3,18 +3,45 @@ package appstate
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
+	"os"
 	"path"
+	"path/filepath"
 
 	yaml "gopkg.in/yaml.v2"
 )
 
-// BrokenMode signal if the application is broken
-var BrokenMode bool
+var (
+	// BrokenMode signal if the application is broken
+	BrokenMode bool
+	// AvailableCameras list index of detected cameras
+	AvailableCameras []int
+
+	// Rootdir executable code to reach assets
+	Rootdir string
+	// Datadir access to write storage path
+	Datadir string
+)
 
 const brokenversion = "2.0alpha1"
 
 type versionYaml struct {
 	Version string `yaml:"version"`
+}
+
+func init() {
+	// Set main set of directories
+	var err error
+	Rootdir = os.Getenv("SNAP")
+	if Rootdir == "" {
+		if Rootdir, err = filepath.Abs(path.Join(filepath.Dir(os.Args[0]), "..")); err != nil {
+			log.Fatal(err)
+		}
+	}
+	Datadir = os.Getenv("SNAP_DATA")
+	if Datadir == "" {
+		Datadir = Rootdir
+	}
 }
 
 // CheckIfBroken checks and set if app is in broken state (when matching brokenversion)

@@ -1,4 +1,4 @@
-name: face-detection
+name: face-detection-demo
 version: "2.0alpha1"
 summary: Demo for Face Detection statistics
 description: |
@@ -7,6 +7,7 @@ description: |
   We can as well toggle some fun mode replacing heads with random distribution
   logos supporting snap.
   All stats are reported through a web interface on 8080 port.
+grade: devel
 # AVC apparmor="DENIED" operation="open" profile="snap.face-detection.service" name="/sys/bus/usb/devices/" pid=16707 comm="face-detection-" requested_mask="r" denied_mask="r" fsuid=0 ouid=0
 # kernel: audit: type=1400 audit(1471437969.708:2261): apparmor="DENIED" operation="open" profile="snap.face-detection.service" name="/sys/bus/usb/devices/" pid=16707 comm="face-detection-" requested_mask="r" denied_mask="r" fsuid=0 ouid=0
 
@@ -15,10 +16,10 @@ description: |
 confinement: devmode
 
 apps:
-  face-detection:
+  face-detection-demo:
     command: face-detection-cli
   service:
-    command: face-detection-service
+    command: face-detection-service --force
     daemon: simple
     restart-condition: always
     plugs: [camera, network, network-bind]
@@ -27,18 +28,17 @@ parts:
   face-detection-backend:
     source: .
     plugin: go
+    go-importpath: github.com/ubuntu/face-detection-demo
     build-packages:
       - build-essential
       - libopencv-dev
   assets-backend:
     source: .
     plugin: dump
-    stage: [images, frontfacedetection.xml]
     snap: [images, frontfacedetection.xml]
   website:
     source: https://github.com/ubuntu/face-detection-web.git
     plugin: bower
-    # organize doesn't work for now, we workaround in the plugin
-    #organize:
-    #  '.': 'www'
+    organize:
+      '*': 'www/'
     

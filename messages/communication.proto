@@ -16,5 +16,7 @@ message Action {
   }
   RenderingMode renderingMode = 2;
 
-  bool QuitServer = 3;
+  int32 Camera = 3;
+
+  bool QuitServer = 4;
 }

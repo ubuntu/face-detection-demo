@@ -28,9 +28,10 @@ from snapcraft.plugins import dump, nodejs
 
 class BowerPlugin(dump.DumpPlugin, nodejs.NodePlugin):
 
-    def build(self):
-        # Setup build and install directory with source ssets
-        dump.DumpPlugin.build(self)
+    def pull(self):
+        '''we install bower and npm modules at that stage, instead of build,
+        # as builders cut network access in the build phase'''
+        super().pull()
 
         # Call manually the nodejs provisionning as plugins hooks are not
         # idemnpotent and second plugin super() call will recall BasePlugin
@@ -43,7 +44,11 @@ class BowerPlugin(dump.DumpPlugin, nodejs.NodePlugin):
         self.run(['npm', 'install', '-g', 'bower'])
 
         # Run bower component install
-        self.run(['bower', '--allow-root', 'install'], cwd=self.installdir)
+        self.run(['bower', '--allow-root', 'install'], cwd=self.sourcedir)
+
+    def build(self):
+        ''''Setup build and install directory with source sets'''
+        dump.DumpPlugin.build(self)
 
         # Remove bower and npm from final installation
         for npmdir in ['bin', 'etc', 'include', 'lib', 'share', '.git']:
@@ -51,10 +56,3 @@ class BowerPlugin(dump.DumpPlugin, nodejs.NodePlugin):
         for npmfile in ['CHANGELOG.md', 'LICENSE', 'README.md', '.gitignore']:
             os.remove(os.path.join(self.installdir, npmfile))
 
-        # WORKAROUND as organize doesn't work to move full root dir
-        destdir = os.path.join(self.installdir, 'www')
-        files = os.listdir(self.installdir)
-        os.makedirs(destdir)
-        for f in files:
-            os.rename(os.path.join(self.installdir, f),
-                      os.path.join(destdir, f))

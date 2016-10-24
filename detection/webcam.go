@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/lazywei/go-opencv/opencv"
+	"github.com/ubuntu/face-detection-demo/appstate"
 	"github.com/ubuntu/face-detection-demo/comm"
 	"github.com/ubuntu/face-detection-demo/datastore"
 	"github.com/ubuntu/face-detection-demo/messages"
@@ -15,8 +16,13 @@ import (
 var (
 	stop chan interface{}
 
-	cameraOn bool
+	cameraOn   bool
+	currentCam = -1
 )
+
+func init() {
+	DetectCameras()
+}
 
 // StartCameraDetect creates a go routine handling web cam recording and image generation
 func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.WaitGroup) {
@@ -42,9 +48,9 @@ func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.Wai
 		defer func() { cameraOn = false }()
 		defer fmt.Println("Stop camera")
 
-		cap := opencv.NewCameraCapture(0)
+		cap := openCamera(datastore.Camera())
 		if cap == nil {
-			panic("cannot open camera")
+			panic(fmt.Sprintf("Cannot open camera %d", currentCam))
 		}
 		defer cap.Release()
 		cameraOn = true
@@ -59,6 +65,25 @@ func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.Wai
 
 }
 
+// fallback to camera 0 if can't open requested camera number
+func openCamera(cameraNum int) *opencv.Capture {
+	currentCam = cameraNum
+	cap := opencv.NewCameraCapture(currentCam)
+	if cap == nil && currentCam != 0 {
+		fmt.Printf("Can't open camera %d. Trying fallback to camera 0\n", currentCam)
+		currentCam = 0
+		cap = opencv.NewCameraCapture(currentCam)
+		if cap != nil {
+			datastore.SetCamera(currentCam)
+			comm.WSserv.SendAllClients(&messages.WSMessage{
+				Type: "newcameraactivated",
+				// camera is offsetted by 1 for the client
+				Camera: currentCam + 1})
+		}
+	}
+	return cap
+}
+
 // EndCameraDetect stop the associated goroutine turning on camera
 func EndCameraDetect() {
 	datastore.SetFaceDetection(false)
@@ -71,6 +96,47 @@ func EndCameraDetect() {
 		return
 	}
 	close(stop)
+}
+
+// RestartCamera stops and restarts the camera in a sync fashion (wait for the camera to stop before sending the Start signal)
+func RestartCamera(rootdir string, shutdown <-chan interface{}, wg *sync.WaitGroup) {
+	if !cameraOn {
+		// check again after a second in case of a start + restart is issued.
+		// FIXME: this should be way better handled
+		time.Sleep(time.Second * 1)
+		if !cameraOn {
+			StartCameraDetect(rootdir, shutdown, wg)
+			return
+		}
+	}
+	close(stop)
+	for {
+		if !cameraOn {
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+	StartCameraDetect(rootdir, shutdown, wg)
+}
+
+// DetectCameras detects and files the index of available cameras. Take into account current camera if already on
+func DetectCameras() {
+	appstate.AvailableCameras = make([]int, 0)
+
+	for i := 0; i < 10; i++ {
+		cap := opencv.NewCameraCapture(i)
+		if cap != nil || (cameraOn && i == currentCam) {
+			if cap != nil {
+				cap.Release()
+			}
+			// camera is offsetted by 1 for the client
+			appstate.AvailableCameras = append(appstate.AvailableCameras, i+1)
+		}
+	}
+
+	if len(appstate.AvailableCameras) == 0 {
+		panic("No camera detected")
+	}
 }
 
 func detectFace(cap *opencv.Capture, rootdir string, stop <-chan interface{}) {
@@ -122,15 +188,14 @@ func drawAndSaveFaces(img *opencv.IplImage, faces []*opencv.Rect) {
 	}
 
 	// store and save stat
-	s := &datastore.Stat{TimeStamp: time.Now(), NumPersons: len(faces)}
+	np := len(faces)
+	if appstate.BrokenMode {
+		np = -np
+	}
+	s := &datastore.Stat{TimeStamp: time.Now(), NumPersons: np}
 	datastore.DB.Add(*s)
 
-	// save raw image
-	savefn := func(filepath string) error {
-		opencv.SaveImage(filepath, img, 0)
-		return nil
-	}
-	if err := saveatomic(datadir, screenshotname, savefn); err != nil {
+	if err := saveatomic(datadir, screenshotname, (*opencvImg)(img)); err != nil {
 		fmt.Println(err)
 	}
 

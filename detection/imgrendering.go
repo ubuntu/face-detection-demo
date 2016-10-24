@@ -11,13 +11,14 @@ import (
 
 	"github.com/lazywei/go-opencv/opencv"
 	"github.com/nfnt/resize"
+	"github.com/ubuntu/face-detection-demo/appstate"
 	"github.com/ubuntu/face-detection-demo/datastore"
 )
 
 var (
 	logos     []image.Image
 	logosPath = []string{"ubuntu.png", "archlinux.png", "debian.png", "gentoo.png",
-		"fedora.png", "opensuse.png", "yocto.png"}
+		"fedora.png", "opensuse.png", "yocto.png", "smiley.png"}
 	datadir string
 
 	detectedfilename = "screendetected.png"
@@ -26,24 +27,31 @@ var (
 
 // RenderedImage abstract if we are using opencv or direct image blending
 type RenderedImage struct {
-	cvimg         *opencv.IplImage
-	img           *image.RGBA
+	cvimg         *opencvImg
+	img           *rgbaImg
 	RenderingMode datastore.RenderMode
 }
 
-type saveImgHandler func(string) error
+type opencvImg opencv.IplImage
+type rgbaImg struct {
+	*image.RGBA
+}
+type saver interface {
+	Save(string) error
+}
 
-// InitLogos and destination datadir. Will ignore unreachable logos
-func InitLogos(logodir string, ddir string) {
-	datadir = ddir
+// load logo images. Ignore unreachable or undecodable ones.
+func init() {
+	datadir = appstate.Datadir
 
 	logos = make([]image.Image, len(logosPath))
 	i := 0
 
 	for _, p := range logosPath {
-		f, err := os.Open(path.Join(logodir, p))
+		imgPath := path.Join(appstate.Rootdir, "images", p)
+		f, err := os.Open(imgPath)
 		if err != nil {
-			log.Println("Couldn't open", path.Join(logodir, p))
+			log.Println("Couldn't open", imgPath)
 			continue
 		}
 		defer f.Close()
@@ -60,16 +68,38 @@ func InitLogos(logodir string, ddir string) {
 	logos = logos[:i]
 }
 
+// Save opencv images
+func (i *opencvImg) Save(filepath string) error {
+	opencv.SaveImage(filepath, (*opencv.IplImage)(i), 0)
+	return nil
+}
+
+// Save rgba images in png
+func (i *rgbaImg) Save(filepath string) error {
+	f, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return png.Encode(f, i)
+}
+
 // DrawFace renders a new face on top of image depending on rendering type
 func (r *RenderedImage) DrawFace(face *opencv.Rect, num int, cvimage *opencv.IplImage) {
+
+	if appstate.BrokenMode {
+		// force drawing smileys instead of people
+		r.drawFunFace(face, len(logos)-1, cvimage)
+		return
+	}
 
 	switch r.RenderingMode {
 	case datastore.NORMALRENDERING:
 		if r.cvimg == nil {
-			r.cvimg = cvimage.Clone()
+			r.cvimg = (*opencvImg)(cvimage.Clone())
 		}
 
-		opencv.Circle(r.cvimg,
+		opencv.Circle((*opencv.IplImage)(r.cvimg),
 			opencv.Point{
 				X: face.X() + (face.Width() / 2),
 				Y: face.Y() + (face.Height() / 2),
@@ -78,58 +108,49 @@ func (r *RenderedImage) DrawFace(face *opencv.Rect, num int, cvimage *opencv.Ipl
 			opencv.ScalarAll(255.0), 1, 1, 0)
 
 	case datastore.FUNRENDERING:
-		if r.img == nil {
-			source := cvimage.ToImage()
-			r.img = image.NewRGBA(source.Bounds())
-			draw.Draw(r.img, r.img.Bounds(), source, image.ZP, draw.Src)
-		}
-
-		// resize logo to match face
 		// TODO: logo needs to be randomized depending on num
-		logo := resize.Resize(0, uint(face.Height()), logos[num], resize.NearestNeighbor)
-		logorect := image.Rect(face.X()+face.Width()/2-logo.Bounds().Dx()/2,
-			face.Y()+face.Height()/2-logo.Bounds().Dy()/2,
-			face.X()+logo.Bounds().Dx(),
-			face.Y()+logo.Bounds().Dy())
-
-		draw.Draw(r.img, logorect, logo, image.ZP, draw.Over)
-
+		r.drawFunFace(face, num%(len(logos)-1), cvimage)
 	}
+}
+
+func (r *RenderedImage) drawFunFace(face *opencv.Rect, num int, cvimage *opencv.IplImage) {
+
+	if r.img == nil {
+		source := cvimage.ToImage()
+		r.img = &rgbaImg{image.NewRGBA(source.Bounds())}
+		draw.Draw(r.img, r.img.Bounds(), source, image.ZP, draw.Src)
+	}
+
+	// resize logo to match face
+	logo := resize.Resize(0, uint(face.Height()), logos[num], resize.NearestNeighbor)
+	logorect := image.Rect(face.X()+face.Width()/2-logo.Bounds().Dx()/2,
+		face.Y()+face.Height()/2-logo.Bounds().Dy()/2,
+		face.X()+logo.Bounds().Dx(),
+		face.Y()+logo.Bounds().Dy())
+
+	draw.Draw(r.img, logorect, logo, image.ZP, draw.Over)
 }
 
 // Save current image in destination file
 func (r *RenderedImage) Save() {
 
-	var savefn func(string) error
-
-	switch r.RenderingMode {
-	case datastore.NORMALRENDERING:
-		savefn = func(filepath string) error {
-			opencv.SaveImage(filepath, r.cvimg, 0)
-			return nil
-		}
-
-	case datastore.FUNRENDERING:
-		savefn = func(filepath string) error {
-			f, err := os.Create(filepath)
-			if err != nil {
-				return err
-			}
-			defer f.Close()
-			return png.Encode(f, r.img)
-		}
+	var i saver
+	if r.cvimg != nil {
+		i = r.cvimg
+	} else {
+		i = r.img
 	}
 
-	if err := saveatomic(datadir, detectedfilename, savefn); err != nil {
+	if err := saveatomic(datadir, detectedfilename, i); err != nil {
 		fmt.Println(err)
 	}
 }
 
-func saveatomic(dir string, filename string, savefn saveImgHandler) error {
+func saveatomic(dir string, filename string, s saver) error {
 	tempfilen := path.Join(dir, "new"+filename)
 	dstfilen := path.Join(dir, filename)
 
-	if err := savefn(tempfilen); err != nil {
+	if err := s.Save(tempfilen); err != nil {
 		return fmt.Errorf("Couldn't save image to %s: %s", tempfilen, err)
 	}
 	defer os.Remove(tempfilen)

@@ -7,6 +7,8 @@ import (
 	"path"
 	"sync"
 
+	"github.com/ubuntu/face-detection-demo/appstate"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -23,19 +25,18 @@ const (
 type settingsElem struct {
 	FaceDetectionSetting bool
 	RenderingModeSetting RenderMode
+	Camera               int
 }
 
 var (
-	datadir       string
 	settingsdir   string
-	settings      = settingsElem{false, NORMALRENDERING}
+	settings      = settingsElem{false, NORMALRENDERING, 0}
 	filesavemutex = &sync.Mutex{}
 )
 
-// LoadSettings initialize directory where data are
-func LoadSettings(dir string) {
-	datadir = dir
-	settingsdir = path.Join(datadir, "settings")
+// initialize directory where data are
+func init() {
+	settingsdir = path.Join(appstate.Datadir, "settings")
 
 	// load settings
 	dat, err := ioutil.ReadFile(settingsdir)
@@ -58,6 +59,11 @@ func RenderingMode() RenderMode {
 	return settings.RenderingModeSetting
 }
 
+// Camera return current camera number set
+func Camera() int {
+	return settings.Camera
+}
+
 // SetFaceDetection save new detection state
 func SetFaceDetection(faceDetection bool) {
 	if faceDetection == settings.FaceDetectionSetting {
@@ -74,6 +80,16 @@ func SetRenderingMode(renderingMode RenderMode) {
 		return
 	}
 	settings.RenderingModeSetting = renderingMode
+
+	go saveToFile()
+}
+
+// SetCamera save active camera number
+func SetCamera(cameranum int) {
+	if cameranum == settings.Camera {
+		return
+	}
+	settings.Camera = cameranum
 
 	go saveToFile()
 }
