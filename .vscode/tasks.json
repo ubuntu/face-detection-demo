@@ -11,7 +11,7 @@
     "tasks": [
         {
             "taskName": "build",
-            "args": ["cd ${fileDirname} && go build"]
+            "args": ["cd ${fileDirname} && go build && echo DONE!"]
         }
     ]
 }
