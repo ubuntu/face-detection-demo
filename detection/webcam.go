@@ -20,6 +20,10 @@ var (
 	currentCam = -1
 )
 
+func init() {
+	DetectCameras()
+}
+
 // StartCameraDetect creates a go routine handling web cam recording and image generation
 func StartCameraDetect(rootdir string, shutdown <-chan interface{}, wg *sync.WaitGroup) {
 	if cameraOn {
@@ -128,6 +132,10 @@ func DetectCameras() {
 			// camera is offsetted by 1 for the client
 			appstate.AvailableCameras = append(appstate.AvailableCameras, i+1)
 		}
+	}
+
+	if len(appstate.AvailableCameras) == 0 {
+		panic("No camera detected")
 	}
 }
 

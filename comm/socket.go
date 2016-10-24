@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/ubuntu/face-detection-demo/appstate"
 	"github.com/ubuntu/face-detection-demo/messages"
 )
 
@@ -17,13 +18,13 @@ var socketpath string
 
 const socketfilename string = "facedetect.socket"
 
-// SetSocketDir to initialize socket dir and path between client and server
-func SetSocketDir(socketdir string) {
-	socketpath = path.Join(socketdir, socketfilename)
+// initialize socket dir and path between client and server
+func init() {
+	socketpath = path.Join(appstate.Datadir, socketfilename)
 }
 
 // StartSocketListener executes a socket listener in its own goroutine
-func StartSocketListener(actions chan<- *messages.Action, shutdown <-chan interface{}, wg *sync.WaitGroup) {
+func StartSocketListener(actions chan<- *messages.Action, shutdown <-chan interface{}, forcecreation bool, wg *sync.WaitGroup) {
 
 	wg.Add(1)
 	go func() {
@@ -31,7 +32,11 @@ func StartSocketListener(actions chan<- *messages.Action, shutdown <-chan interf
 		defer os.Remove(socketpath)
 
 		l, err := net.Listen("unix", socketpath)
-		if err != nil {
+		// recreate socket if forced
+		if err != nil && forcecreation {
+			os.Remove(socketpath)
+			l, err = net.Listen("unix", socketpath)
+		} else if err != nil {
 			log.Fatal("listen error:", err)
 		}
 		if err := os.Chmod(socketpath, 0777); err != nil {
@@ -67,7 +72,7 @@ func StartSocketListener(actions chan<- *messages.Action, shutdown <-chan interf
 func SendToSocket(msg *messages.Action) (err error) {
 	conn, err := net.Dial("unix", socketpath)
 	if err != nil {
-		fmt.Println("Couldn connect to socket:", err)
+		fmt.Println("Couldn't connect to socket. Is your service running?")
 		return
 	}
 	defer conn.Close()

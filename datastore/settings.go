@@ -7,6 +7,8 @@ import (
 	"path"
 	"sync"
 
+	"github.com/ubuntu/face-detection-demo/appstate"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -27,16 +29,14 @@ type settingsElem struct {
 }
 
 var (
-	datadir       string
 	settingsdir   string
 	settings      = settingsElem{false, NORMALRENDERING, 0}
 	filesavemutex = &sync.Mutex{}
 )
 
-// LoadSettings initialize directory where data are
-func LoadSettings(dir string) {
-	datadir = dir
-	settingsdir = path.Join(datadir, "settings")
+// initialize directory where data are
+func init() {
+	settingsdir = path.Join(appstate.Datadir, "settings")
 
 	// load settings
 	dat, err := ioutil.ReadFile(settingsdir)

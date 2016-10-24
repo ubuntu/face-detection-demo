@@ -40,33 +40,18 @@ type saver interface {
 	Save(string) error
 }
 
-// Save opencv images
-func (i *opencvImg) Save(filepath string) error {
-	opencv.SaveImage(filepath, (*opencv.IplImage)(i), 0)
-	return nil
-}
-
-// Save rgba images in png
-func (i *rgbaImg) Save(filepath string) error {
-	f, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	return png.Encode(f, i)
-}
-
-// InitLogos and destination datadir. Will ignore unreachable logos
-func InitLogos(logodir string, ddir string) {
-	datadir = ddir
+// load logo images. Ignore unreachable or undecodable ones.
+func init() {
+	datadir = appstate.Datadir
 
 	logos = make([]image.Image, len(logosPath))
 	i := 0
 
 	for _, p := range logosPath {
-		f, err := os.Open(path.Join(logodir, p))
+		imgPath := path.Join(appstate.Rootdir, "images", p)
+		f, err := os.Open(imgPath)
 		if err != nil {
-			log.Println("Couldn't open", path.Join(logodir, p))
+			log.Println("Couldn't open", imgPath)
 			continue
 		}
 		defer f.Close()
@@ -81,6 +66,22 @@ func InitLogos(logodir string, ddir string) {
 	}
 	// reslice to have current len() in case we couldn't load some logos
 	logos = logos[:i]
+}
+
+// Save opencv images
+func (i *opencvImg) Save(filepath string) error {
+	opencv.SaveImage(filepath, (*opencv.IplImage)(i), 0)
+	return nil
+}
+
+// Save rgba images in png
+func (i *rgbaImg) Save(filepath string) error {
+	f, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return png.Encode(f, i)
 }
 
 // DrawFace renders a new face on top of image depending on rendering type
