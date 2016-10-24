@@ -19,7 +19,7 @@ apps:
   face-detection-demo:
     command: face-detection-cli
   service:
-    command: face-detection-service
+    command: face-detection-service --force
     daemon: simple
     restart-condition: always
     plugs: [camera, network, network-bind]
