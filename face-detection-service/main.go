@@ -56,8 +56,6 @@ func main() {
 	// prepare settings and data
 	datastore.StartDB(appstate.Datadir, shutdownservices, wgservices)
 
-	fmt.Println(datastore.DB.Stats)
-
 	// starts external communications channel
 	comm.StartSocketListener(actions, shutdownservices, *deletesocket, wgservices)
 	comm.StartServer(appstate.Rootdir, appstate.Datadir, actions)
@@ -69,7 +67,6 @@ func main() {
 
 mainloop:
 	for {
-		fmt.Println("main loop")
 		select {
 		case action := <-actions:
 			fmt.Println("new action received")

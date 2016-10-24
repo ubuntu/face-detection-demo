@@ -72,7 +72,7 @@ func StartSocketListener(actions chan<- *messages.Action, shutdown <-chan interf
 func SendToSocket(msg *messages.Action) (err error) {
 	conn, err := net.Dial("unix", socketpath)
 	if err != nil {
-		fmt.Println("Couldn connect to socket:", err)
+		fmt.Println("Couldn't connect to socket. Is your service running?")
 		return
 	}
 	defer conn.Close()
