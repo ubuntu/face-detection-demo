@@ -133,6 +133,10 @@ func DetectCameras() {
 			appstate.AvailableCameras = append(appstate.AvailableCameras, i+1)
 		}
 	}
+
+	if len(appstate.AvailableCameras) == 0 {
+		panic("No camera detected")
+	}
 }
 
 func detectFace(cap *opencv.Capture, rootdir string, stop <-chan interface{}) {
