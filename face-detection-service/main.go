@@ -50,9 +50,6 @@ func main() {
 
 	actions := make(chan *messages.Action, 2)
 
-	// detect available cameras at startup
-	detection.DetectCameras()
-
 	// prepare settings and data
 	datastore.StartDB(appstate.Datadir, shutdownservices, wgservices)
 
