@@ -24,7 +24,7 @@ func init() {
 }
 
 // StartSocketListener executes a socket listener in its own goroutine
-func StartSocketListener(actions chan<- *messages.Action, shutdown <-chan interface{}, wg *sync.WaitGroup) {
+func StartSocketListener(actions chan<- *messages.Action, shutdown <-chan interface{}, forcecreation bool, wg *sync.WaitGroup) {
 
 	wg.Add(1)
 	go func() {
@@ -32,7 +32,11 @@ func StartSocketListener(actions chan<- *messages.Action, shutdown <-chan interf
 		defer os.Remove(socketpath)
 
 		l, err := net.Listen("unix", socketpath)
-		if err != nil {
+		// recreate socket if forced
+		if err != nil && forcecreation {
+			os.Remove(socketpath)
+			l, err = net.Listen("unix", socketpath)
+		} else if err != nil {
 			log.Fatal("listen error:", err)
 		}
 		if err := os.Chmod(socketpath, 0777); err != nil {

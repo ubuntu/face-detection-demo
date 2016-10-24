@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -25,6 +26,10 @@ var (
 
 //go:generate protoc --go_out=../messages/ --proto_path ../messages/ ../messages/communication.proto
 func main() {
+
+	// always starts even if socket exists
+	deletesocket := flag.Bool("force", false, "Try force starting even if another daemon is running")
+	flag.Parse()
 
 	// check if we are in broken mode and remove database if it's the case
 	appstate.CheckIfBroken(appstate.Rootdir)
@@ -54,7 +59,7 @@ func main() {
 	fmt.Println(datastore.DB.Stats)
 
 	// starts external communications channel
-	comm.StartSocketListener(actions, shutdownservices, wgservices)
+	comm.StartSocketListener(actions, shutdownservices, *deletesocket, wgservices)
 	comm.StartServer(appstate.Rootdir, appstate.Datadir, actions)
 
 	// starts camera if it was already started last time
