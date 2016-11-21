@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/didrocks/go-opencv/opencv"
+	"github.com/lazywei/go-opencv/opencv"
 	"github.com/ubuntu/face-detection-demo/appstate"
 	"github.com/ubuntu/face-detection-demo/comm"
 	"github.com/ubuntu/face-detection-demo/datastore"
