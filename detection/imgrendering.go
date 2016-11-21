@@ -9,7 +9,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/lazywei/go-opencv/opencv"
+	"github.com/didrocks/go-opencv/opencv"
 	"github.com/nfnt/resize"
 	"github.com/ubuntu/face-detection-demo/appstate"
 	"github.com/ubuntu/face-detection-demo/datastore"
