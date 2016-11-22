@@ -32,7 +32,6 @@ parts:
     build-packages:
       - build-essential
       - libopencv-dev
-      - libpng12-0
   assets-backend:
     source: .
     plugin: dump
