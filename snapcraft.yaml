@@ -19,7 +19,7 @@ apps:
   face-detection-demo:
     command: face-detection-cli
   service:
-    command: face-detection-service --force
+    command: corelibs face-detection-service --force
     daemon: simple
     restart-condition: always
     plugs: [camera, network, network-bind]
@@ -42,4 +42,8 @@ parts:
     plugin: bower
     organize:
       '*': 'www/'
-    
+  workaround:
+    source: wrapper/
+    plugin: dump
+    snap: [corelibs, lib/]
+    stage-packages: [libpng12-0, zlib1g]
