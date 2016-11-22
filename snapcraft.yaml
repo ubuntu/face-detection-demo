@@ -41,4 +41,7 @@ parts:
     plugin: bower
     organize:
       '*': 'www/'
-    
+  workaround:
+    plugin: nil
+    snap: [lib/, usr/lib]
+    stage-packages: [libfreetype6, libpng12-0, zlib1g]
