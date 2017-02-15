@@ -1,0 +1,4 @@
+face-detection:
+  description: "Face detection demo"
+  image: www/images/chrome-touch-icon-192x192.png
+  url: http://localhost:8080
