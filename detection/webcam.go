@@ -154,13 +154,13 @@ func detectFace(cap *opencv.Capture, rootdir string, stop <-chan interface{}) {
 
 		if cap.GrabFrame() {
 
-			// we dropped all grab framesand only take one every X seconds (no support in opencv go binding for CV_CAP_PROP_BUFFERSIZE)
+			// we dropped all grab frames and only take one every X seconds (no support in opencv go binding for CV_CAP_PROP_BUFFERSIZE)
 			// if we didn't grab them one after another, we'll have past frames when proceeding
 			if time.Now().Before(nextFrameSec) {
 				continue
 			}
 
-			// treat framee
+			// treat frame
 			img := cap.RetrieveFrame(1)
 			if img != nil {
 				faces := cascade.DetectObjects(img)
