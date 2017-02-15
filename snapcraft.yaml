@@ -35,7 +35,7 @@ parts:
   assets-backend:
     source: .
     plugin: dump
-    snap: [images, frontfacedetection.xml]
+    snap: [images, frontfacedetection.xml, booth-demo-manager.def]
   website:
     source: https://github.com/ubuntu/face-detection-web.git
     plugin: bower
