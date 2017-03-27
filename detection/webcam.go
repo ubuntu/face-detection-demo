@@ -142,12 +142,12 @@ func DetectCameras() {
 func detectFace(cap *opencv.Capture, rootdir string, stop <-chan interface{}) {
 	nextFrameSec := time.Now()
 	cascade := opencv.LoadHaarClassifierCascade(path.Join(rootdir, "frontfacedetection.xml"))
+	defer cascade.Release()
 	for {
 
 		select {
 		case <-stop:
 			fmt.Println("Stop processing webcam events")
-			cascade.Release()
 			return
 		default:
 		}
@@ -168,8 +168,6 @@ func detectFace(cap *opencv.Capture, rootdir string, stop <-chan interface{}) {
 			}
 
 		}
-		cascade.Release()
-		cascade = opencv.LoadHaarClassifierCascade(path.Join(rootdir, "frontfacedetection.xml"))
 		nextFrameSec = time.Now().Add(time.Duration(5 * time.Second))
 	}
 
