@@ -163,14 +163,13 @@ func detectFace(cap *opencv.Capture, rootdir string, stop <-chan interface{}) {
 			// treat frame
 			img := cap.RetrieveFrame(1)
 			if img != nil {
-				faces := cascade.DetectObjects(img)
-				drawAndSaveFaces(img, faces)
+				_ = cascade.DetectObjects(img)
+				fmt.Println(time.Now())
+				//drawAndSaveFaces(img, faces)
 			}
 
 		}
-		cascade.Release()
-		cascade = opencv.LoadHaarClassifierCascade(path.Join(rootdir, "frontfacedetection.xml"))
-		nextFrameSec = time.Now().Add(time.Duration(5 * time.Second))
+		nextFrameSec = time.Now().Add(time.Duration(1 * time.Millisecond))
 	}
 
 }
