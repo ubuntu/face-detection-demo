@@ -1,4 +1,4 @@
-name: face-detection-demo
+name: face-detection-demo-perf
 version: "1.0"
 summary: Demo for Face Detection statistics
 description: |
