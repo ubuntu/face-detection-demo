@@ -70,7 +70,7 @@ func init() {
 
 // Save opencv images
 func (i *opencvImg) Save(filepath string) error {
-	opencv.SaveImage(filepath, (*opencv.IplImage)(i), 0)
+	opencv.SaveImage(filepath, (*opencv.IplImage)(i), nil)
 	return nil
 }
 
